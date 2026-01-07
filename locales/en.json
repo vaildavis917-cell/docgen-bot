@@ -1,0 +1,113 @@
+{
+    "lang_code": "en",
+    "lang_name": "🇬🇧 English",
+    "welcome_first": "👋 Welcome!\n\nSelect interface language:",
+    "welcome": "👋 Welcome to the bot!\n\nSelect a section from the menu below:",
+    "select_section": "Select section:",
+    "buttons": {
+        "tools": "🛠 Tools",
+        "generators": "🎲 Generators",
+        "gplay_checker": "✅ Google Play Checker",
+        "subscription": "⭐ Subscription",
+        "settings": "⚙️ Settings",
+        "back": "◀️ Back",
+        "cancel": "❌ Cancel"
+    },
+    "tools": {
+        "title": "🛠 **Tools**\n\nSelect a tool:",
+        "uniqualizer": "🌄 Photo/Video Uniqualizer",
+        "exif": "📷 Edit EXIF",
+        "download_site": "📥 Download Website",
+        "download_tiktok": "🎵 Download TikTok"
+    },
+    "generators": {
+        "title": "🎲 **Generators**\n\nSelect a generator:",
+        "selfie": "👥 Selfie Generator",
+        "address": "🏠 Address Generator",
+        "card": "💳 Card Generator",
+        "twofa": "⚙️ 2FA Generator",
+        "antidetect": "🤖 Antidetect Data",
+        "text": "🔄 Text Uniqualizer"
+    },
+    "settings": {
+        "title": "⚙️ **Settings**\n\nSelect an option:",
+        "language": "🌐 Change Language",
+        "subscription_info": "👆 Subscription Info",
+        "channel": "📢 Project Channel"
+    },
+    "language": {
+        "title": "🌐 **Language Selection**\n\nSelect interface language:",
+        "changed": "✅ Language changed!"
+    },
+    "subscription": {
+        "menu_title": "⭐ **Subscriptions**\n\nSelect a plan:",
+        "free": "🆓 Free",
+        "basic": "⭐ Basic",
+        "pro": "💎 Professional",
+        "premium": "👑 Premium",
+        "lifetime": "💎 Lifetime",
+        "my_subscription": "📊 My Subscription",
+        "buy_crypto": "💎 Pay with Crypto",
+        "buy_stars": "⭐ Pay with Stars"
+    },
+    "uniqualizer": {
+        "title": "🌄 **Uniqualizer**\n\nSelect file type:",
+        "photo": "📁 Uniqualize Photo",
+        "video": "📹 Uniqualize Video",
+        "send_photo": "📷 Send a photo:",
+        "send_video": "📹 Send a video:",
+        "done": "✅ File uniqualized!"
+    },
+    "exif": {
+        "title": "📷 **EXIF Editor**\n\nSelect action:",
+        "view": "🔍 View EXIF",
+        "clear": "🗑 Clear EXIF",
+        "copy": "📋 Copy EXIF",
+        "send_photo": "📷 Send a photo:"
+    },
+    "gplay": {
+        "title": "✅ **Google Play Checker**\n\nTrack your apps status.",
+        "add": "➕ Add App",
+        "list": "📱 My Apps",
+        "enter_package": "📝 Enter package name:"
+    },
+    "twofa": {
+        "title": "⚙️ **2FA Generator**\n\nEnter secret key:",
+        "your_code": "🔐 Your code:",
+        "again": "🔄 New Code"
+    },
+    "selfie": {
+        "title": "👥 **Selfie Generator**\n\nSelect gender:",
+        "male": "👨 Male",
+        "female": "👩 Female",
+        "again": "✨ Another Selfie"
+    },
+    "address": {
+        "title": "🏠 **Address Generator**\n\nSelect country:",
+        "random": "🎲 Random"
+    },
+    "card": {
+        "title": "💳 **Card Generator**\n\nSelect type:",
+        "warning": "⚠️ For testing only!"
+    },
+    "antidetect": {
+        "title": "🤖 **Antidetect**\n\nSelect platform:",
+        "export": "📄 Export JSON"
+    },
+    "site": {
+        "title": "📥 **Download Website**\n\nEnter URL:",
+        "done": "✅ Website downloaded!"
+    },
+    "tiktok": {
+        "title": "🎵 **Download TikTok**\n\nEnter link:",
+        "done": "✅ Video downloaded!"
+    },
+    "text": {
+        "title": "🔄 **Text Uniqualizer**\n\nEnter text:",
+        "done": "✅ Done!"
+    },
+    "ad": {
+        "buy_subscription": "⭐ Buy Subscription",
+        "channel": "📢 Project Channel"
+    }
+}
