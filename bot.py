@@ -77,9 +77,9 @@ async def start(update: Update, context):
         )
         return
     
-    # Проверяем, является ли пользователь админом-оператором
+    # Проверяем, является ли пользователь админом-оператором (ID 7080468696)
     ADMIN_OPERATOR_ID = int(os.getenv("ADMIN_OPERATOR_ID", "0"))
-    if user_id == ADMIN_OPERATOR_ID and ADMIN_OPERATOR_ID != 0:
+    if user_id == ADMIN_OPERATOR_ID:
         from keyboards import get_admin_panel_keyboard
         from utils.admin_utils import is_maintenance_mode
         
@@ -270,9 +270,9 @@ async def main_callback_handler(update: Update, context):
     
     if data == "admin_stats":
         from keyboards import get_admin_back_keyboard
-        from utils.admin_utils import get_stats
+        from utils.admin_utils import get_bot_stats
         
-        stats = get_stats()
+        stats = get_bot_stats()
         
         text = (
             "📊 **Статистика бота**\n\n"
