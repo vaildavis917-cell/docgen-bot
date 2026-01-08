@@ -1,0 +1,23 @@
+[Unit]
+Description=DocGen Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/docgen_bot
+ExecStart=/usr/bin/python3 bot.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/ubuntu/docgen_bot/bot.log
+StandardError=append:/home/ubuntu/docgen_bot/bot.log
+
+# Перезапуск при любых ошибках
+RestartPreventExitStatus=
+
+# Ограничение на количество перезапусков (макс 5 за 60 секунд)
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target
