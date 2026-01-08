@@ -313,3 +313,32 @@ def create_document_image(template_type, user_data, output_path):
     set_exif(output_path, exif_bytes, output_path)
     
     return True
+
+
+# === Асинхронные обёртки для многопользовательского режима ===
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+# Пул потоков для обработки изображений (макс 20 одновременных)
+_image_executor = ThreadPoolExecutor(max_workers=20, thread_name_prefix='image_')
+
+
+async def uniqualize_image_async(image_path, output_path, settings=None, add_exif=True):
+    """Асинхронная уникализация изображения"""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        _image_executor,
+        lambda: uniqualize_image(image_path, output_path, settings, add_exif)
+    )
+
+
+async def create_document_image_async(template_type, user_data, output_path):
+    """Асинхронное создание документа"""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        _image_executor,
+        create_document_image,
+        template_type,
+        user_data,
+        output_path
+    )

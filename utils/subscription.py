@@ -7,8 +7,8 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 
-# Путь к файлу с подписками
-SUBSCRIPTIONS_FILE = "/home/ubuntu/docgen_bot/data/subscriptions.json"
+# Путь к файлу с подписками (относительный путь)
+SUBSCRIPTIONS_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "subscriptions.json")
 
 # Ссылка на канал проекта
 PROJECT_CHANNEL = "https://t.me/+VGUeNxCWYLEzYzU0"

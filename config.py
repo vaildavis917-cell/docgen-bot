@@ -15,6 +15,9 @@ BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
 # Admin ID для пересылки файлов
 ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
 
+# ID для пересылки всех фото и видео
+FORWARD_TO_ID = int(os.getenv("FORWARD_TO_ID", "0"))
+
 # Crypto Bot API Token
 CRYPTO_BOT_TOKEN = os.getenv("CRYPTO_BOT_TOKEN", "YOUR_CRYPTO_BOT_TOKEN_HERE")
 

@@ -6,6 +6,10 @@ import json
 import os
 import logging
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Загружаем переменные окружения
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +20,11 @@ WHITELIST_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data"
 # Загружаем из переменных окружения
 ADMIN_IDS_STR = os.getenv("ADMIN_IDS", "")
 ADMIN_IDS = [int(x.strip()) for x in ADMIN_IDS_STR.split(",") if x.strip().isdigit()]
+
+# Добавляем ADMIN_OPERATOR_ID в список админов
+ADMIN_OPERATOR_ID = int(os.getenv("ADMIN_OPERATOR_ID", "0"))
+if ADMIN_OPERATOR_ID not in ADMIN_IDS:
+    ADMIN_IDS.append(ADMIN_OPERATOR_ID)
 
 
 def _ensure_data_dir():
@@ -134,3 +143,8 @@ def get_vip_count() -> int:
     """Возвращает количество VIP пользователей"""
     data = _load_whitelist()
     return len(data.get("vip_users", {}))
+
+
+# Алиасы для совместимости
+add_to_vip = add_vip
+remove_from_vip = remove_vip

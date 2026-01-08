@@ -273,3 +273,34 @@ def get_video_info(video_path):
         return json.loads(result.stdout)
     except:
         return None
+
+
+# === Асинхронные обёртки для многопользовательского режима ===
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+# Пул потоков для тяжёлых операций (макс 10 одновременных видео)
+_video_executor = ThreadPoolExecutor(max_workers=10, thread_name_prefix='video_')
+
+
+async def uniqualize_video_async(input_path, output_path, settings=None):
+    """Асинхронная уникализация видео"""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        _video_executor,
+        uniqualize_video,
+        input_path,
+        output_path,
+        settings
+    )
+
+
+async def download_tiktok_video_async(url, output_path):
+    """Асинхронное скачивание TikTok"""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        _video_executor,
+        download_tiktok_video,
+        url,
+        output_path
+    )

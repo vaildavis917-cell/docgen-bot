@@ -7,6 +7,10 @@ import os
 import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+from dotenv import load_dotenv
+
+# Загружаем переменные окружения
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +23,11 @@ USERS_FILE = os.path.join(DATA_DIR, "users.json")
 # Администраторы (загружаем из переменных окружения)
 ADMIN_IDS_STR = os.getenv("ADMIN_IDS", "")
 ADMIN_IDS = [int(x.strip()) for x in ADMIN_IDS_STR.split(",") if x.strip().isdigit()]
+
+# Добавляем ADMIN_OPERATOR_ID в список админов
+ADMIN_OPERATOR_ID = int(os.getenv("ADMIN_OPERATOR_ID", "0"))
+if ADMIN_OPERATOR_ID not in ADMIN_IDS:
+    ADMIN_IDS.append(ADMIN_OPERATOR_ID)
 
 
 def _ensure_data_dir():
@@ -128,7 +137,15 @@ def set_maintenance_mode(enabled: bool, message: str = None) -> bool:
 def get_maintenance_message() -> str:
     """Получает сообщение о режиме обслуживания"""
     data = _load_json(BOT_STATE_FILE, {})
-    return data.get("maintenance_message", "🔧 Бот на техническом обслуживании. Пожалуйста, подождите.")
+    custom_msg = data.get("maintenance_message", "")
+    
+    default_msg = (
+        "🔧 **Технические работы**\n\n"
+        "Бот временно недоступен. Пожалуйста, подождите.\n"
+        "Мы сообщим, когда работа будет восстановлена."
+    )
+    
+    return custom_msg if custom_msg else default_msg
 
 
 # === Управление пользователями ===

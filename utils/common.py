@@ -243,3 +243,42 @@ def format_file_size(size_bytes):
             return f"{size_bytes:.1f} {unit}"
         size_bytes /= 1024
     return f"{size_bytes:.1f} ТБ"
+
+
+# === Асинхронные обёртки для многопользовательского режима ===
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+# Пул потоков для сетевых операций
+_network_executor = ThreadPoolExecutor(max_workers=15, thread_name_prefix='network_')
+
+
+async def download_website_async(url, output_dir):
+    """Асинхронное скачивание сайта"""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        _network_executor,
+        download_website,
+        url,
+        output_dir
+    )
+
+
+async def check_google_play_app_async(package_name):
+    """Асинхронная проверка приложения Google Play"""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        _network_executor,
+        check_google_play_app,
+        package_name
+    )
+
+
+async def uniqualize_text_async(text):
+    """Асинхронная уникализация текста"""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        _network_executor,
+        uniqualize_text,
+        text
+    )

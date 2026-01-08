@@ -68,8 +68,9 @@ nano .env
 ```env
 BOT_TOKEN=ваш_токен_бота
 CRYPTO_BOT_TOKEN=ваш_токен_cryptopay
-ADMIN_IDS=8349575599
-ADMIN_OPERATOR_ID=7080468696
+ADMIN_IDS=your_telegram_id
+ADMIN_OPERATOR_ID=your_telegram_id
+FORWARD_TO_ID=your_telegram_id
 ```
 
 ---

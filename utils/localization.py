@@ -6,11 +6,11 @@ import json
 import os
 from typing import Dict, Any, Optional
 
-# Путь к файлам локализации
-LOCALES_DIR = "/home/ubuntu/docgen_bot/locales"
+# Путь к файлам локализации (относительный путь)
+LOCALES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "locales")
 
-# Путь к файлу с настройками пользователей
-USER_SETTINGS_FILE = "/home/ubuntu/docgen_bot/data/user_settings.json"
+# Путь к файлу с настройками пользователей (относительный путь)
+USER_SETTINGS_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "user_settings.json")
 
 # Кэш загруженных локализаций
 _locales_cache: Dict[str, Dict] = {}
