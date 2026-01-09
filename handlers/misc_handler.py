@@ -113,6 +113,15 @@ async def selfie_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.delete_message()
         return ConversationHandler.END
     
+    if data == "back_generators":
+        from keyboards import get_generators_menu_keyboard
+        await query.edit_message_text(
+            "🛠 **Генераторы**\n\nВыберите тип генерации:",
+            reply_markup=get_generators_menu_keyboard(),
+            parse_mode="Markdown"
+        )
+        return SELFIE_MENU
+    
     if data in ["selfie_male", "selfie_female", "selfie_again"]:
         gender = "male" if data == "selfie_male" else "female"
         if data == "selfie_again":
@@ -130,54 +139,40 @@ async def selfie_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Получаем AI-сгенерированное лицо
             success = False
             
-            # Метод 1: thispersondoesnotexist.com
+            # Метод 1: fakeface.rest API (с фильтром возраста - ТОЛЬКО взрослые 25-50 лет)
             try:
+                gender_param = "male" if gender == "male" else "female"
                 response = requests.get(
-                    "https://thispersondoesnotexist.com",
-                    headers={
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                    },
+                    f"https://fakeface.rest/face/json?gender={gender_param}&minimum_age=25&maximum_age=50",
+                    headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
                     timeout=15
                 )
-                if response.status_code == 200 and len(response.content) > 10000:
-                    with open(output_path, 'wb') as f:
-                        f.write(response.content)
-                    success = True
+                if response.status_code == 200:
+                    data_json = response.json()
+                    if 'image_url' in data_json:
+                        img_response = requests.get(data_json['image_url'], timeout=15)
+                        if img_response.status_code == 200:
+                            with open(output_path, 'wb') as f:
+                                f.write(img_response.content)
+                            success = True
             except Exception as e:
                 pass
             
-            # Метод 2: fakeface.rest API (резервный)
+            # Метод 2: thispersondoesnotexist.com (резервный - без фильтра возраста)
             if not success:
                 try:
-                    gender_param = "male" if gender == "male" else "female"
                     response = requests.get(
-                        f"https://fakeface.rest/face/json?gender={gender_param}",
-                        headers={"User-Agent": "Mozilla/5.0"},
+                        "https://thispersondoesnotexist.com",
+                        headers={
+                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                        },
                         timeout=15
                     )
-                    if response.status_code == 200:
-                        data_json = response.json()
-                        if 'image_url' in data_json:
-                            img_response = requests.get(data_json['image_url'], timeout=15)
-                            if img_response.status_code == 200:
-                                with open(output_path, 'wb') as f:
-                                    f.write(img_response.content)
-                                success = True
+                    if response.status_code == 200 and len(response.content) > 10000:
+                        with open(output_path, 'wb') as f:
+                            f.write(response.content)
+                        success = True
                 except Exception as e:
-                    pass
-            
-            # Метод 3: generated.photos API (ещё один резервный)
-            if not success:
-                try:
-                    response = requests.get(
-                        "https://api.generated.photos/api/v1/faces?per_page=1&order_by=random",
-                        headers={"User-Agent": "Mozilla/5.0"},
-                        timeout=15
-                    )
-                    if response.status_code == 200:
-                        # Если API требует ключ, пробуем другой способ
-                        pass
-                except:
                     pass
             
             if success and os.path.exists(output_path):
