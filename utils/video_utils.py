@@ -77,14 +77,22 @@ def uniqualize_video(input_path, output_path, settings=None):
         video_filters = []
         audio_filters = []
         
-        # Изменение разрешения
+        # Изменение разрешения (максимум 720p для скорости)
+        MAX_HEIGHT = 720
         res_change = settings.get("resolution_change", 0)
         if isinstance(res_change, tuple):
             res_change = random.uniform(res_change[0], res_change[1])
         scale_factor = 1 + (res_change / 100)
         new_width = int(orig_width * scale_factor)
         new_height = int(orig_height * scale_factor)
-        # Делаем четными
+        
+        # Ограничиваем до 720p если больше
+        if new_height > MAX_HEIGHT:
+            scale_ratio = MAX_HEIGHT / new_height
+            new_height = MAX_HEIGHT
+            new_width = int(new_width * scale_ratio)
+        
+        # Делаем четными (требование h264)
         new_width = new_width if new_width % 2 == 0 else new_width + 1
         new_height = new_height if new_height % 2 == 0 else new_height + 1
         video_filters.append(f"scale={new_width}:{new_height}")
