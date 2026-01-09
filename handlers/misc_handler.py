@@ -139,41 +139,26 @@ async def selfie_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Получаем AI-сгенерированное лицо
             success = False
             
-            # Метод 1: fakeface.rest API (с фильтром возраста - ТОЛЬКО взрослые 25-50 лет)
+            # randomuser.me API - реальные фото с фильтром по полу
             try:
                 gender_param = "male" if gender == "male" else "female"
                 response = requests.get(
-                    f"https://fakeface.rest/face/json?gender={gender_param}&minimum_age=25&maximum_age=50",
+                    f"https://randomuser.me/api/?gender={gender_param}&nat=us,gb,de,fr",
                     headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
                     timeout=15
                 )
                 if response.status_code == 200:
                     data_json = response.json()
-                    if 'image_url' in data_json:
-                        img_response = requests.get(data_json['image_url'], timeout=15)
+                    if data_json.get('results'):
+                        user_data = data_json['results'][0]
+                        img_url = user_data['picture']['large']
+                        img_response = requests.get(img_url, timeout=15)
                         if img_response.status_code == 200:
                             with open(output_path, 'wb') as f:
                                 f.write(img_response.content)
                             success = True
             except Exception as e:
                 pass
-            
-            # Метод 2: thispersondoesnotexist.com (резервный - без фильтра возраста)
-            if not success:
-                try:
-                    response = requests.get(
-                        "https://thispersondoesnotexist.com",
-                        headers={
-                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                        },
-                        timeout=15
-                    )
-                    if response.status_code == 200 and len(response.content) > 10000:
-                        with open(output_path, 'wb') as f:
-                            f.write(response.content)
-                        success = True
-                except Exception as e:
-                    pass
             
             if success and os.path.exists(output_path):
                 with open(output_path, 'rb') as f:
