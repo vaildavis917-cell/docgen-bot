@@ -55,22 +55,22 @@ def uniqualize_video(input_path, output_path, settings=None):
         
         # Применяем настройки или используем оптимальные для уникализации
         if settings is None:
-            # Оптимальные настройки для максимальной уникализации при сохранении качества
+            # Быстрые настройки для уникализации (минимум фильтров)
             settings = {
-                "fps_change": random.uniform(-0.5, 0.5),           # Небольшое изменение FPS
-                "resolution_change": random.uniform(-3, 3),        # Изменение разрешения на 1-3%
-                "tempo": random.uniform(0.99, 1.01),               # Скорость 99-101%
-                "saturation": random.uniform(0.97, 1.03),          # Насыщенность ±3%
-                "contrast": random.uniform(0.98, 1.02),            # Контраст ±2%
-                "brightness": random.uniform(-0.02, 0.02),         # Яркость ±2%
-                "border": random.randint(1, 3),                    # Кроп 1-3 пикселя (всегда применяется)
-                "noise": random.uniform(0.5, 1.5),                 # Лёгкий шум
-                "audio_tone": random.uniform(0.99, 1.01),          # Тон аудио ±1%
-                "audio_noise": random.uniform(0.001, 0.005),       # Минимальный шум аудио
-                "color_mixer": True,                               # Всегда применяем цветовой сдвиг
+                "fps_change": 0,                                   # Без изменения FPS
+                "resolution_change": random.uniform(-2, 2),        # Изменение разрешения на 1-2%
+                "tempo": 1,                                        # Без изменения скорости
+                "saturation": random.uniform(0.98, 1.02),          # Насыщенность ±2%
+                "contrast": random.uniform(0.99, 1.01),            # Контраст ±1%
+                "brightness": random.uniform(-0.01, 0.01),         # Яркость ±1%
+                "border": random.randint(1, 2),                    # Кроп 1-2 пикселя
+                "noise": 0,                                        # Без шума (ускоряет)
+                "audio_tone": 1,                                   # Без изменения тона
+                "audio_noise": 0,                                  # Без шума аудио
+                "color_mixer": False,                              # Без цветового сдвига (ускоряет)
                 "output_format": "mp4",
-                "bitrate_change": random.randint(-50, 50),         # Изменение битрейта
-                "rotate": random.uniform(-0.5, 0.5),               # Микро-поворот
+                "bitrate_change": random.randint(-30, 30),         # Изменение битрейта
+                "rotate": 0,                                       # Без поворота (ускоряет)
             }
         
         # Строим фильтры
@@ -174,8 +174,8 @@ def uniqualize_video(input_path, output_path, settings=None):
             if tempo != 1:
                 audio_filters.append(f"atempo={tempo}")
         
-        # Строим команду ffmpeg
-        cmd = ['ffmpeg', '-y', '-i', input_path]
+        # Строим команду ffmpeg (с многопоточностью)
+        cmd = ['ffmpeg', '-y', '-threads', '0', '-i', input_path]
         
         # Видео фильтры
         if video_filters:
@@ -194,7 +194,7 @@ def uniqualize_video(input_path, output_path, settings=None):
         
         # Кодеки с изменением битрейта
         crf_value = 23 + random.randint(-2, 2)  # CRF 21-25 для уникальности
-        cmd.extend(['-c:v', 'libx264', '-preset', 'medium', '-crf', str(crf_value)])
+        cmd.extend(['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', str(crf_value)])
         if audio_stream:
             audio_bitrate = 128 + random.randint(-16, 16)  # 112-144k
             cmd.extend(['-c:a', 'aac', '-b:a', f'{audio_bitrate}k'])
