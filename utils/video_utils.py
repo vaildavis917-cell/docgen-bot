@@ -174,8 +174,13 @@ def uniqualize_video(input_path, output_path, settings=None):
             if tempo != 1:
                 audio_filters.append(f"atempo={tempo}")
         
-        # Строим команду ffmpeg (с многопоточностью)
-        cmd = ['ffmpeg', '-y', '-threads', '0', '-i', input_path]
+        # Строим команду ffmpeg (оптимизировано для скорости)
+        cmd = [
+            'ffmpeg', '-y',
+            '-threads', '0',           # Использовать все ядра CPU
+            '-hwaccel', 'auto',        # Авто-аппаратное ускорение
+            '-i', input_path
+        ]
         
         # Видео фильтры
         if video_filters:
@@ -192,9 +197,15 @@ def uniqualize_video(input_path, output_path, settings=None):
         new_fps = max(15, min(60, orig_fps + fps_change))
         cmd.extend(['-r', str(int(new_fps))])
         
-        # Кодеки с изменением битрейта
+        # Кодеки (оптимизировано для скорости)
         crf_value = 23 + random.randint(-2, 2)  # CRF 21-25 для уникальности
-        cmd.extend(['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', str(crf_value)])
+        cmd.extend([
+            '-c:v', 'libx264',
+            '-preset', 'ultrafast',    # Самый быстрый пресет
+            '-tune', 'fastdecode',     # Оптимизация для быстрого декодирования
+            '-crf', str(crf_value),
+            '-movflags', '+faststart', # Быстрый старт воспроизведения
+        ])
         if audio_stream:
             audio_bitrate = 128 + random.randint(-16, 16)  # 112-144k
             cmd.extend(['-c:a', 'aac', '-b:a', f'{audio_bitrate}k'])
@@ -231,8 +242,8 @@ def uniqualize_video(input_path, output_path, settings=None):
         
         cmd.append(output_path)
         
-        # Выполняем
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        # Выполняем (600 секунд = 10 минут для больших файлов)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
         
         if result.returncode == 0 and os.path.exists(output_path):
             return True, output_path
