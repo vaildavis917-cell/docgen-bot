@@ -107,6 +107,488 @@ ADDRESS_DATA = {
         ],
         "streets": ["ul. Główna", "ul. Kościelna", "ul. Szkolna", "ul. Ogrodowa", "ul. Polna", "ul. Leśna", "ul. Krótka", "ul. Parkowa", "ul. Słoneczna"],
         "phone_format": "+48 ### ### ###"
+    },
+    "fr": {
+        "country": "Франция",
+        "flag": "🇫🇷",
+        "cities": [
+            {"city": "Paris", "state": "Île-de-France", "zip_format": "75###"},
+            {"city": "Marseille", "state": "PACA", "zip_format": "13###"},
+            {"city": "Lyon", "state": "Auvergne-Rhône-Alpes", "zip_format": "69###"},
+            {"city": "Toulouse", "state": "Occitanie", "zip_format": "31###"},
+            {"city": "Nice", "state": "PACA", "zip_format": "06###"},
+            {"city": "Nantes", "state": "Pays de la Loire", "zip_format": "44###"},
+            {"city": "Bordeaux", "state": "Nouvelle-Aquitaine", "zip_format": "33###"},
+        ],
+        "streets": ["Rue de la Paix", "Avenue des Champs-Élysées", "Boulevard Saint-Germain", "Rue du Faubourg", "Place de la République", "Rue Victor Hugo", "Avenue de la Liberté", "Rue Nationale"],
+        "phone_format": "+33 # ## ## ## ##"
+    },
+    "it": {
+        "country": "Италия",
+        "flag": "🇮🇹",
+        "cities": [
+            {"city": "Roma", "state": "Lazio", "zip_format": "00###"},
+            {"city": "Milano", "state": "Lombardia", "zip_format": "20###"},
+            {"city": "Napoli", "state": "Campania", "zip_format": "80###"},
+            {"city": "Torino", "state": "Piemonte", "zip_format": "10###"},
+            {"city": "Firenze", "state": "Toscana", "zip_format": "50###"},
+            {"city": "Venezia", "state": "Veneto", "zip_format": "30###"},
+            {"city": "Bologna", "state": "Emilia-Romagna", "zip_format": "40###"},
+        ],
+        "streets": ["Via Roma", "Via Garibaldi", "Via Dante", "Via Mazzini", "Corso Italia", "Via Nazionale", "Via Verdi", "Piazza del Duomo", "Via della Repubblica"],
+        "phone_format": "+39 ### ### ####"
+    },
+    "es": {
+        "country": "Испания",
+        "flag": "🇪🇸",
+        "cities": [
+            {"city": "Madrid", "state": "Madrid", "zip_format": "28###"},
+            {"city": "Barcelona", "state": "Cataluña", "zip_format": "08###"},
+            {"city": "Valencia", "state": "Valencia", "zip_format": "46###"},
+            {"city": "Sevilla", "state": "Andalucía", "zip_format": "41###"},
+            {"city": "Zaragoza", "state": "Aragón", "zip_format": "50###"},
+            {"city": "Málaga", "state": "Andalucía", "zip_format": "29###"},
+            {"city": "Bilbao", "state": "País Vasco", "zip_format": "48###"},
+        ],
+        "streets": ["Calle Mayor", "Calle Real", "Avenida de la Constitución", "Paseo de Gracia", "Gran Vía", "Calle de Alcalá", "Rambla", "Plaza Mayor", "Calle del Carmen"],
+        "phone_format": "+34 ### ### ###"
+    },
+    "ca": {
+        "country": "Канада",
+        "flag": "🇨🇦",
+        "cities": [
+            {"city": "Toronto", "state": "Ontario", "zip_format": "M#A #A#"},
+            {"city": "Montreal", "state": "Quebec", "zip_format": "H#A #A#"},
+            {"city": "Vancouver", "state": "British Columbia", "zip_format": "V#A #A#"},
+            {"city": "Calgary", "state": "Alberta", "zip_format": "T#A #A#"},
+            {"city": "Ottawa", "state": "Ontario", "zip_format": "K#A #A#"},
+            {"city": "Edmonton", "state": "Alberta", "zip_format": "T#A #A#"},
+        ],
+        "streets": ["Main Street", "King Street", "Queen Street", "Yonge Street", "Bay Street", "Maple Avenue", "Oak Street", "Cedar Lane", "Pine Road"],
+        "phone_format": "+1 (###) ###-####"
+    },
+    "au": {
+        "country": "Австралия",
+        "flag": "🇦🇺",
+        "cities": [
+            {"city": "Sydney", "state": "NSW", "zip_format": "2###"},
+            {"city": "Melbourne", "state": "VIC", "zip_format": "3###"},
+            {"city": "Brisbane", "state": "QLD", "zip_format": "4###"},
+            {"city": "Perth", "state": "WA", "zip_format": "6###"},
+            {"city": "Adelaide", "state": "SA", "zip_format": "5###"},
+            {"city": "Gold Coast", "state": "QLD", "zip_format": "42##"},
+        ],
+        "streets": ["George Street", "King Street", "Queen Street", "Elizabeth Street", "Collins Street", "Bourke Street", "Pitt Street", "Market Street"],
+        "phone_format": "+61 # #### ####"
+    },
+    "jp": {
+        "country": "Япония",
+        "flag": "🇯🇵",
+        "cities": [
+            {"city": "Tokyo", "state": "Tokyo", "zip_format": "1##-####"},
+            {"city": "Osaka", "state": "Osaka", "zip_format": "5##-####"},
+            {"city": "Kyoto", "state": "Kyoto", "zip_format": "6##-####"},
+            {"city": "Yokohama", "state": "Kanagawa", "zip_format": "2##-####"},
+            {"city": "Nagoya", "state": "Aichi", "zip_format": "4##-####"},
+            {"city": "Sapporo", "state": "Hokkaido", "zip_format": "0##-####"},
+        ],
+        "streets": ["Shibuya", "Shinjuku", "Ginza", "Akihabara", "Harajuku", "Roppongi", "Ikebukuro", "Ueno"],
+        "phone_format": "+81 ##-####-####"
+    },
+    "cn": {
+        "country": "Китай",
+        "flag": "🇨🇳",
+        "cities": [
+            {"city": "Beijing", "state": "Beijing", "zip_format": "100###"},
+            {"city": "Shanghai", "state": "Shanghai", "zip_format": "200###"},
+            {"city": "Guangzhou", "state": "Guangdong", "zip_format": "510###"},
+            {"city": "Shenzhen", "state": "Guangdong", "zip_format": "518###"},
+            {"city": "Chengdu", "state": "Sichuan", "zip_format": "610###"},
+            {"city": "Hangzhou", "state": "Zhejiang", "zip_format": "310###"},
+        ],
+        "streets": ["Nanjing Road", "Wangfujing Street", "Huaihai Road", "Beijing Road", "Zhongshan Road", "Jiefang Road", "Renmin Road"],
+        "phone_format": "+86 ### #### ####"
+    },
+    "br": {
+        "country": "Бразилия",
+        "flag": "🇧🇷",
+        "cities": [
+            {"city": "São Paulo", "state": "SP", "zip_format": "01###-###"},
+            {"city": "Rio de Janeiro", "state": "RJ", "zip_format": "20###-###"},
+            {"city": "Brasília", "state": "DF", "zip_format": "70###-###"},
+            {"city": "Salvador", "state": "BA", "zip_format": "40###-###"},
+            {"city": "Fortaleza", "state": "CE", "zip_format": "60###-###"},
+            {"city": "Belo Horizonte", "state": "MG", "zip_format": "30###-###"},
+        ],
+        "streets": ["Avenida Paulista", "Rua Augusta", "Avenida Brasil", "Rua das Flores", "Avenida Atlântica", "Rua XV de Novembro", "Avenida Presidente Vargas"],
+        "phone_format": "+55 ## #####-####"
+    },
+    "mx": {
+        "country": "Мексика",
+        "flag": "🇲🇽",
+        "cities": [
+            {"city": "Ciudad de México", "state": "CDMX", "zip_format": "0####"},
+            {"city": "Guadalajara", "state": "Jalisco", "zip_format": "44###"},
+            {"city": "Monterrey", "state": "Nuevo León", "zip_format": "64###"},
+            {"city": "Puebla", "state": "Puebla", "zip_format": "72###"},
+            {"city": "Tijuana", "state": "Baja California", "zip_format": "22###"},
+            {"city": "Cancún", "state": "Quintana Roo", "zip_format": "77###"},
+        ],
+        "streets": ["Avenida Reforma", "Calle Juárez", "Avenida Insurgentes", "Calle Hidalgo", "Paseo de la Reforma", "Calle Morelos", "Avenida Revolución"],
+        "phone_format": "+52 ## #### ####"
+    },
+    "in": {
+        "country": "Индия",
+        "flag": "🇮🇳",
+        "cities": [
+            {"city": "Mumbai", "state": "Maharashtra", "zip_format": "400###"},
+            {"city": "Delhi", "state": "Delhi", "zip_format": "110###"},
+            {"city": "Bangalore", "state": "Karnataka", "zip_format": "560###"},
+            {"city": "Chennai", "state": "Tamil Nadu", "zip_format": "600###"},
+            {"city": "Kolkata", "state": "West Bengal", "zip_format": "700###"},
+            {"city": "Hyderabad", "state": "Telangana", "zip_format": "500###"},
+        ],
+        "streets": ["MG Road", "Brigade Road", "Park Street", "Linking Road", "Commercial Street", "Anna Salai", "Connaught Place"],
+        "phone_format": "+91 ##### #####"
+    },
+    "kr": {
+        "country": "Южная Корея",
+        "flag": "🇰🇷",
+        "cities": [
+            {"city": "Seoul", "state": "Seoul", "zip_format": "0####"},
+            {"city": "Busan", "state": "Busan", "zip_format": "4####"},
+            {"city": "Incheon", "state": "Incheon", "zip_format": "2####"},
+            {"city": "Daegu", "state": "Daegu", "zip_format": "4####"},
+            {"city": "Daejeon", "state": "Daejeon", "zip_format": "3####"},
+            {"city": "Gwangju", "state": "Gwangju", "zip_format": "6####"},
+        ],
+        "streets": ["Gangnam-daero", "Teheran-ro", "Jongno", "Myeongdong-gil", "Itaewon-ro", "Hongdae", "Apgujeong-ro"],
+        "phone_format": "+82 ##-####-####"
+    },
+    "nl": {
+        "country": "Нидерланды",
+        "flag": "🇳🇱",
+        "cities": [
+            {"city": "Amsterdam", "state": "Noord-Holland", "zip_format": "10## AA"},
+            {"city": "Rotterdam", "state": "Zuid-Holland", "zip_format": "30## AA"},
+            {"city": "Den Haag", "state": "Zuid-Holland", "zip_format": "25## AA"},
+            {"city": "Utrecht", "state": "Utrecht", "zip_format": "35## AA"},
+            {"city": "Eindhoven", "state": "Noord-Brabant", "zip_format": "56## AA"},
+        ],
+        "streets": ["Kalverstraat", "Damrak", "Leidsestraat", "Prinsengracht", "Herengracht", "Keizersgracht", "Rokin"],
+        "phone_format": "+31 # ########"
+    },
+    "se": {
+        "country": "Швеция",
+        "flag": "🇸🇪",
+        "cities": [
+            {"city": "Stockholm", "state": "Stockholm", "zip_format": "1## ##"},
+            {"city": "Göteborg", "state": "Västra Götaland", "zip_format": "4## ##"},
+            {"city": "Malmö", "state": "Skåne", "zip_format": "2## ##"},
+            {"city": "Uppsala", "state": "Uppsala", "zip_format": "7## ##"},
+        ],
+        "streets": ["Drottninggatan", "Kungsgatan", "Sveavagen", "Storgatan", "Vasagatan", "Birger Jarlsgatan"],
+        "phone_format": "+46 ## ### ## ##"
+    },
+    "ch": {
+        "country": "Швейцария",
+        "flag": "🇨🇭",
+        "cities": [
+            {"city": "Zürich", "state": "Zürich", "zip_format": "80##"},
+            {"city": "Geneva", "state": "Genève", "zip_format": "12##"},
+            {"city": "Basel", "state": "Basel-Stadt", "zip_format": "40##"},
+            {"city": "Bern", "state": "Bern", "zip_format": "30##"},
+            {"city": "Lausanne", "state": "Vaud", "zip_format": "10##"},
+        ],
+        "streets": ["Bahnhofstrasse", "Rue du Rhône", "Freie Strasse", "Marktgasse", "Kramgasse", "Spitalgasse"],
+        "phone_format": "+41 ## ### ## ##"
+    },
+    "at": {
+        "country": "Австрия",
+        "flag": "🇦🇹",
+        "cities": [
+            {"city": "Wien", "state": "Wien", "zip_format": "1###"},
+            {"city": "Graz", "state": "Steiermark", "zip_format": "80##"},
+            {"city": "Linz", "state": "Oberösterreich", "zip_format": "40##"},
+            {"city": "Salzburg", "state": "Salzburg", "zip_format": "50##"},
+            {"city": "Innsbruck", "state": "Tirol", "zip_format": "60##"},
+        ],
+        "streets": ["Kärntner Straße", "Mariahilfer Straße", "Graben", "Ringstraße", "Herrengasse", "Landstraße"],
+        "phone_format": "+43 ### #######"
+    },
+    "be": {
+        "country": "Бельгия",
+        "flag": "🇧🇪",
+        "cities": [
+            {"city": "Brussels", "state": "Brussels", "zip_format": "1###"},
+            {"city": "Antwerp", "state": "Antwerpen", "zip_format": "2###"},
+            {"city": "Ghent", "state": "Oost-Vlaanderen", "zip_format": "9###"},
+            {"city": "Bruges", "state": "West-Vlaanderen", "zip_format": "8###"},
+            {"city": "Liège", "state": "Liège", "zip_format": "4###"},
+        ],
+        "streets": ["Grand Place", "Rue Neuve", "Avenue Louise", "Meir", "Veldstraat", "Rue de la Loi"],
+        "phone_format": "+32 ### ## ## ##"
+    },
+    "pt": {
+        "country": "Португалия",
+        "flag": "🇵🇹",
+        "cities": [
+            {"city": "Lisboa", "state": "Lisboa", "zip_format": "1###-###"},
+            {"city": "Porto", "state": "Porto", "zip_format": "4###-###"},
+            {"city": "Braga", "state": "Braga", "zip_format": "47##-###"},
+            {"city": "Coimbra", "state": "Coimbra", "zip_format": "30##-###"},
+            {"city": "Faro", "state": "Faro", "zip_format": "80##-###"},
+        ],
+        "streets": ["Avenida da Liberdade", "Rua Augusta", "Rua de Santa Catarina", "Avenida dos Aliados", "Rua Garrett"],
+        "phone_format": "+351 ### ### ###"
+    },
+    "no": {
+        "country": "Норвегия",
+        "flag": "🇳🇴",
+        "cities": [
+            {"city": "Oslo", "state": "Oslo", "zip_format": "0###"},
+            {"city": "Bergen", "state": "Vestland", "zip_format": "5###"},
+            {"city": "Trondheim", "state": "Trøndelag", "zip_format": "7###"},
+            {"city": "Stavanger", "state": "Rogaland", "zip_format": "4###"},
+        ],
+        "streets": ["Karl Johans gate", "Storgata", "Torggata", "Grünerløkka", "Bogstadveien"],
+        "phone_format": "+47 ### ## ###"
+    },
+    "dk": {
+        "country": "Дания",
+        "flag": "🇩🇰",
+        "cities": [
+            {"city": "Copenhagen", "state": "Hovedstaden", "zip_format": "1###"},
+            {"city": "Aarhus", "state": "Midtjylland", "zip_format": "8###"},
+            {"city": "Odense", "state": "Syddanmark", "zip_format": "5###"},
+            {"city": "Aalborg", "state": "Nordjylland", "zip_format": "9###"},
+        ],
+        "streets": ["Strøget", "Nørrebrogade", "Vesterbrogade", "Østerbrogade", "Amagerbrogade"],
+        "phone_format": "+45 ## ## ## ##"
+    },
+    "fi": {
+        "country": "Финляндия",
+        "flag": "🇫🇮",
+        "cities": [
+            {"city": "Helsinki", "state": "Uusimaa", "zip_format": "00###"},
+            {"city": "Espoo", "state": "Uusimaa", "zip_format": "02###"},
+            {"city": "Tampere", "state": "Pirkanmaa", "zip_format": "33###"},
+            {"city": "Turku", "state": "Varsinais-Suomi", "zip_format": "20###"},
+        ],
+        "streets": ["Mannerheimintie", "Aleksanterinkatu", "Esplanadi", "Hämeenkatu", "Keskuskatu"],
+        "phone_format": "+358 ## ### ####"
+    },
+    "cz": {
+        "country": "Чехия",
+        "flag": "🇨🇿",
+        "cities": [
+            {"city": "Praha", "state": "Praha", "zip_format": "1## ##"},
+            {"city": "Brno", "state": "Jihomoravský", "zip_format": "6## ##"},
+            {"city": "Ostrava", "state": "Moravskoslezský", "zip_format": "7## ##"},
+            {"city": "Plzeň", "state": "Plzeňský", "zip_format": "3## ##"},
+        ],
+        "streets": ["Václavské náměstí", "Národní třída", "Karlova", "Pražská", "Masarykova"],
+        "phone_format": "+420 ### ### ###"
+    },
+    "tr": {
+        "country": "Турция",
+        "flag": "🇹🇷",
+        "cities": [
+            {"city": "Istanbul", "state": "Istanbul", "zip_format": "34###"},
+            {"city": "Ankara", "state": "Ankara", "zip_format": "06###"},
+            {"city": "Izmir", "state": "Izmir", "zip_format": "35###"},
+            {"city": "Antalya", "state": "Antalya", "zip_format": "07###"},
+            {"city": "Bursa", "state": "Bursa", "zip_format": "16###"},
+        ],
+        "streets": ["Istiklal Caddesi", "Bağdat Caddesi", "Atatürk Bulvarı", "Cumhuriyet Caddesi", "Koreşehitler Caddesi"],
+        "phone_format": "+90 ### ### ## ##"
+    },
+    "ae": {
+        "country": "ОАЭ",
+        "flag": "🇦🇪",
+        "cities": [
+            {"city": "Dubai", "state": "Dubai", "zip_format": "#####"},
+            {"city": "Abu Dhabi", "state": "Abu Dhabi", "zip_format": "#####"},
+            {"city": "Sharjah", "state": "Sharjah", "zip_format": "#####"},
+            {"city": "Ajman", "state": "Ajman", "zip_format": "#####"},
+        ],
+        "streets": ["Sheikh Zayed Road", "Jumeirah Beach Road", "Al Wasl Road", "Corniche Road", "Hamdan Street"],
+        "phone_format": "+971 ## ### ####"
+    },
+    "sg": {
+        "country": "Сингапур",
+        "flag": "🇸🇬",
+        "cities": [
+            {"city": "Singapore", "state": "Central", "zip_format": "######"},
+        ],
+        "streets": ["Orchard Road", "Marina Bay", "Raffles Place", "Chinatown", "Little India", "Clarke Quay", "Sentosa"],
+        "phone_format": "+65 #### ####"
+    },
+    "nz": {
+        "country": "Новая Зеландия",
+        "flag": "🇳🇿",
+        "cities": [
+            {"city": "Auckland", "state": "Auckland", "zip_format": "1###"},
+            {"city": "Wellington", "state": "Wellington", "zip_format": "6###"},
+            {"city": "Christchurch", "state": "Canterbury", "zip_format": "8###"},
+            {"city": "Hamilton", "state": "Waikato", "zip_format": "3###"},
+        ],
+        "streets": ["Queen Street", "Lambton Quay", "Colombo Street", "Victoria Street", "Cuba Street"],
+        "phone_format": "+64 ## ### ####"
+    },
+    "za": {
+        "country": "ЮАР",
+        "flag": "🇿🇦",
+        "cities": [
+            {"city": "Johannesburg", "state": "Gauteng", "zip_format": "2###"},
+            {"city": "Cape Town", "state": "Western Cape", "zip_format": "8###"},
+            {"city": "Durban", "state": "KwaZulu-Natal", "zip_format": "4###"},
+            {"city": "Pretoria", "state": "Gauteng", "zip_format": "0###"},
+        ],
+        "streets": ["Long Street", "Adderley Street", "Commissioner Street", "Church Street", "West Street"],
+        "phone_format": "+27 ## ### ####"
+    },
+    "il": {
+        "country": "Израиль",
+        "flag": "🇮🇱",
+        "cities": [
+            {"city": "Tel Aviv", "state": "Tel Aviv", "zip_format": "6#####"},
+            {"city": "Jerusalem", "state": "Jerusalem", "zip_format": "9#####"},
+            {"city": "Haifa", "state": "Haifa", "zip_format": "3#####"},
+            {"city": "Eilat", "state": "South", "zip_format": "88#####"},
+        ],
+        "streets": ["Dizengoff Street", "Rothschild Boulevard", "Ben Yehuda Street", "Allenby Street", "Jaffa Road"],
+        "phone_format": "+972 ## ### ####"
+    },
+    "ar": {
+        "country": "Аргентина",
+        "flag": "🇦🇷",
+        "cities": [
+            {"city": "Buenos Aires", "state": "CABA", "zip_format": "C1###AAA"},
+            {"city": "Córdoba", "state": "Córdoba", "zip_format": "X5###AAA"},
+            {"city": "Rosario", "state": "Santa Fe", "zip_format": "S2###AAA"},
+            {"city": "Mendoza", "state": "Mendoza", "zip_format": "M5###AAA"},
+        ],
+        "streets": ["Avenida 9 de Julio", "Calle Florida", "Avenida Corrientes", "Avenida Santa Fe", "Calle Lavalle"],
+        "phone_format": "+54 ## ####-####"
+    },
+    "cl": {
+        "country": "Чили",
+        "flag": "🇨🇱",
+        "cities": [
+            {"city": "Santiago", "state": "Metropolitana", "zip_format": "#######"},
+            {"city": "Valparaíso", "state": "Valparaíso", "zip_format": "#######"},
+            {"city": "Concepción", "state": "Biobío", "zip_format": "#######"},
+        ],
+        "streets": ["Avenida Libertador", "Paseo Ahumada", "Calle Estado", "Avenida Providencia", "Calle Huerfanos"],
+        "phone_format": "+56 # #### ####"
+    },
+    "co": {
+        "country": "Колумбия",
+        "flag": "🇨🇴",
+        "cities": [
+            {"city": "Bogotá", "state": "Cundinamarca", "zip_format": "1#####"},
+            {"city": "Medellín", "state": "Antioquia", "zip_format": "05####"},
+            {"city": "Cali", "state": "Valle del Cauca", "zip_format": "76####"},
+            {"city": "Cartagena", "state": "Bolívar", "zip_format": "13####"},
+        ],
+        "streets": ["Carrera Séptima", "Calle 72", "Avenida El Dorado", "Carrera 15", "Calle 100"],
+        "phone_format": "+57 ### ### ####"
+    },
+    "th": {
+        "country": "Таиланд",
+        "flag": "🇹🇭",
+        "cities": [
+            {"city": "Bangkok", "state": "Bangkok", "zip_format": "10###"},
+            {"city": "Chiang Mai", "state": "Chiang Mai", "zip_format": "50###"},
+            {"city": "Phuket", "state": "Phuket", "zip_format": "83###"},
+            {"city": "Pattaya", "state": "Chonburi", "zip_format": "20###"},
+        ],
+        "streets": ["Sukhumvit Road", "Silom Road", "Khao San Road", "Ratchadamri Road", "Wireless Road"],
+        "phone_format": "+66 ## ### ####"
+    },
+    "my": {
+        "country": "Малайзия",
+        "flag": "🇲🇾",
+        "cities": [
+            {"city": "Kuala Lumpur", "state": "Kuala Lumpur", "zip_format": "5####"},
+            {"city": "George Town", "state": "Penang", "zip_format": "10###"},
+            {"city": "Johor Bahru", "state": "Johor", "zip_format": "80###"},
+            {"city": "Kota Kinabalu", "state": "Sabah", "zip_format": "88###"},
+        ],
+        "streets": ["Jalan Bukit Bintang", "Jalan Sultan Ismail", "Jalan Ampang", "Jalan Tun Razak", "Jalan Imbi"],
+        "phone_format": "+60 ##-### ####"
+    },
+    "ph": {
+        "country": "Филиппины",
+        "flag": "🇵🇭",
+        "cities": [
+            {"city": "Manila", "state": "Metro Manila", "zip_format": "1###"},
+            {"city": "Quezon City", "state": "Metro Manila", "zip_format": "11##"},
+            {"city": "Cebu City", "state": "Cebu", "zip_format": "6###"},
+            {"city": "Davao City", "state": "Davao", "zip_format": "8###"},
+        ],
+        "streets": ["Ayala Avenue", "EDSA", "Roxas Boulevard", "Makati Avenue", "Ortigas Avenue"],
+        "phone_format": "+63 ### ### ####"
+    },
+    "id": {
+        "country": "Индонезия",
+        "flag": "🇮🇩",
+        "cities": [
+            {"city": "Jakarta", "state": "DKI Jakarta", "zip_format": "1####"},
+            {"city": "Surabaya", "state": "East Java", "zip_format": "6####"},
+            {"city": "Bandung", "state": "West Java", "zip_format": "4####"},
+            {"city": "Bali", "state": "Bali", "zip_format": "80###"},
+        ],
+        "streets": ["Jalan Sudirman", "Jalan Thamrin", "Jalan Gatot Subroto", "Jalan Rasuna Said", "Jalan Kuningan"],
+        "phone_format": "+62 ### #### ####"
+    },
+    "vn": {
+        "country": "Вьетнам",
+        "flag": "🇻🇳",
+        "cities": [
+            {"city": "Ho Chi Minh City", "state": "Ho Chi Minh", "zip_format": "7#####"},
+            {"city": "Hanoi", "state": "Hanoi", "zip_format": "1#####"},
+            {"city": "Da Nang", "state": "Da Nang", "zip_format": "5#####"},
+            {"city": "Nha Trang", "state": "Khanh Hoa", "zip_format": "65####"},
+        ],
+        "streets": ["Nguyen Hue", "Le Loi", "Dong Khoi", "Tran Hung Dao", "Hai Ba Trung"],
+        "phone_format": "+84 ### ### ####"
+    },
+    "eg": {
+        "country": "Египет",
+        "flag": "🇪🇬",
+        "cities": [
+            {"city": "Cairo", "state": "Cairo", "zip_format": "#####"},
+            {"city": "Alexandria", "state": "Alexandria", "zip_format": "#####"},
+            {"city": "Giza", "state": "Giza", "zip_format": "#####"},
+            {"city": "Sharm El Sheikh", "state": "South Sinai", "zip_format": "#####"},
+        ],
+        "streets": ["Tahrir Square", "Talaat Harb Street", "26th of July Street", "Corniche El Nil", "Salah Salem Road"],
+        "phone_format": "+20 ### ### ####"
+    },
+    "ng": {
+        "country": "Нигерия",
+        "flag": "🇳🇬",
+        "cities": [
+            {"city": "Lagos", "state": "Lagos", "zip_format": "1#####"},
+            {"city": "Abuja", "state": "FCT", "zip_format": "9#####"},
+            {"city": "Kano", "state": "Kano", "zip_format": "7#####"},
+            {"city": "Ibadan", "state": "Oyo", "zip_format": "2#####"},
+        ],
+        "streets": ["Broad Street", "Marina", "Awolowo Road", "Adeola Odeku", "Victoria Island"],
+        "phone_format": "+234 ### ### ####"
+    },
+    "ke": {
+        "country": "Кения",
+        "flag": "🇰🇪",
+        "cities": [
+            {"city": "Nairobi", "state": "Nairobi", "zip_format": "00###"},
+            {"city": "Mombasa", "state": "Coast", "zip_format": "80###"},
+            {"city": "Kisumu", "state": "Nyanza", "zip_format": "40###"},
+        ],
+        "streets": ["Kenyatta Avenue", "Moi Avenue", "Uhuru Highway", "Tom Mboya Street", "Kimathi Street"],
+        "phone_format": "+254 ### ### ###"
     }
 }
 
@@ -216,6 +698,76 @@ CARD_BINS = {
         "name": "Discover",
         "icon": "💳",
         "bins": ["6011", "644", "645", "646", "647", "648", "649", "65"],
+        "length": 16,
+        "cvv_length": 3
+    },
+    "unionpay": {
+        "name": "UnionPay",
+        "icon": "💳",
+        "bins": ["62", "621", "622", "623", "624", "625", "626"],
+        "length": 16,
+        "cvv_length": 3
+    },
+    "jcb": {
+        "name": "JCB",
+        "icon": "💳",
+        "bins": ["3528", "3529", "353", "354", "355", "356", "357", "358"],
+        "length": 16,
+        "cvv_length": 3
+    },
+    "maestro": {
+        "name": "Maestro",
+        "icon": "💳",
+        "bins": ["5018", "5020", "5038", "5893", "6304", "6759", "6761", "6762", "6763"],
+        "length": 16,
+        "cvv_length": 3
+    },
+    "mir": {
+        "name": "MIR",
+        "icon": "💳",
+        "bins": ["2200", "2201", "2202", "2203", "2204"],
+        "length": 16,
+        "cvv_length": 3
+    },
+    "diners": {
+        "name": "Diners Club",
+        "icon": "💳",
+        "bins": ["300", "301", "302", "303", "304", "305", "36", "38"],
+        "length": 14,
+        "cvv_length": 3
+    },
+    "elo": {
+        "name": "Elo",
+        "icon": "💳",
+        "bins": ["4011", "4312", "4389", "5041", "5066", "5067", "509", "6277", "6362", "6363", "650", "651", "652", "653", "654", "655", "656", "657", "658"],
+        "length": 16,
+        "cvv_length": 3
+    },
+    "hipercard": {
+        "name": "Hipercard",
+        "icon": "💳",
+        "bins": ["384", "606282"],
+        "length": 16,
+        "cvv_length": 3
+    },
+    "rupay": {
+        "name": "RuPay",
+        "icon": "💳",
+        "bins": ["60", "65", "81", "82", "508"],
+        "length": 16,
+        "cvv_length": 3
+    },
+    "troy": {
+        "name": "Troy",
+        "icon": "💳",
+        "bins": ["9792"],
+        "length": 16,
+        "cvv_length": 3
+    },
+    "verve": {
+        "name": "Verve",
+        "icon": "💳",
+        "bins": ["506", "507", "650"],
         "length": 16,
         "cvv_length": 3
     }
