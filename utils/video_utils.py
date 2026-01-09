@@ -64,7 +64,7 @@ def uniqualize_video(input_path, output_path, settings=None):
                 "contrast": 1 + random.uniform(0.01, 0.05),        # Контраст: -5 до 5, рекомендуем 1 до 5
                 "brightness": random.uniform(-0.05, 0.05),         # Яркость: -5 до 5, рекомендуем -5 до 5
                 "border": random.randint(2, 4),                    # Рамка: 1 до 5, рекомендуем 2 до 4
-                "noise": random.uniform(1, 3),                     # Шум: 1 до 5, рекомендуем 1 до 3
+                "noise": 0,                                        # Шум ОТКЛЮЧЕН (медленный фильтр)
                 "audio_tone": 1 + random.uniform(0.01, 0.03),      # Тон аудио: 1 до 5, рекомендуем 1 до 3
                 "audio_noise": 0,
                 "color_mixer": True,                               # Микшер цвета: Вкл/Выкл
@@ -199,11 +199,30 @@ def uniqualize_video(input_path, output_path, settings=None):
             audio_bitrate = 128 + random.randint(-16, 16)  # 112-144k
             cmd.extend(['-c:a', 'aac', '-b:a', f'{audio_bitrate}k'])
         
-        # Метаданные (очищаем и добавляем новые)
+        # Метаданные (очищаем и добавляем новые случайные)
         cmd.extend(['-map_metadata', '-1'])
-        random_date = datetime.now() - timedelta(days=random.randint(1, 365))
+        
+        # Случайная дата создания
+        random_date = datetime.now() - timedelta(days=random.randint(1, 365), hours=random.randint(0, 23), minutes=random.randint(0, 59))
         cmd.extend(['-metadata', f'creation_time={random_date.isoformat()}'])
-        cmd.extend(['-metadata', f'encoder=Lavf{random.randint(58, 60)}.{random.randint(10, 99)}.{random.randint(100, 999)}'])
+        
+        # Случайный энкодер
+        encoders = ['Lavf58', 'Lavf59', 'Lavf60', 'HandBrake', 'FFmpeg', 'x264']
+        encoder = random.choice(encoders) + f'{random.randint(1, 9)}.{random.randint(10, 99)}.{random.randint(100, 999)}'
+        cmd.extend(['-metadata', f'encoder={encoder}'])
+        
+        # Случайный заголовок
+        titles = ['Video', 'Movie', 'Clip', 'Recording', 'Film', '']
+        title = random.choice(titles)
+        if title:
+            title += f'_{random.randint(1000, 9999)}'
+            cmd.extend(['-metadata', f'title={title}'])
+        
+        # Случайный комментарий
+        comments = ['', 'Processed', 'Edited', 'Converted', 'Exported']
+        comment = random.choice(comments)
+        if comment:
+            cmd.extend(['-metadata', f'comment={comment}_{random.randint(100, 999)}'])
         
         # Выходной файл
         output_format = settings.get("output_format", "mp4")
