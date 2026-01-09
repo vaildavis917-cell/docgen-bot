@@ -55,22 +55,22 @@ def uniqualize_video(input_path, output_path, settings=None):
         
         # Применяем настройки или используем оптимальные для уникализации
         if settings is None:
-            # Максимально разнообразные настройки, но оптимизированные по скорости
+            # Авто-настройки с рекомендованными значениями
             settings = {
-                "fps_change": random.uniform(-1, 1),               # Небольшое изменение FPS
-                "resolution_change": random.uniform(-3, 3),        # Изменение разрешения на 1-3%
-                "tempo": random.uniform(0.98, 1.02),               # Скорость 98-102%
-                "saturation": random.uniform(0.95, 1.05),          # Насыщенность ±5%
-                "contrast": random.uniform(0.97, 1.03),            # Контраст ±3%
-                "brightness": random.uniform(-0.03, 0.03),         # Яркость ±3%
-                "border": random.randint(1, 4),                    # Кроп 1-4 пикселя
-                "noise": random.uniform(0, 1),                     # Лёгкий шум (0-1)
-                "audio_tone": random.uniform(0.98, 1.02),          # Тон аудио ±2%
-                "audio_noise": 0,                                  # Без шума аудио (сохраняем качество)
-                "color_mixer": True,                               # Цветовой сдвиг (быстрый фильтр)
+                "fps_change": random.uniform(-1, 1),               # FPS: -2 до 2, рекомендуем -1 до 1
+                "resolution_change": random.uniform(-5, 5),        # Разрешение: -10 до 10, рекомендуем -5 до 5
+                "tempo": 1 + random.uniform(0.01, 0.03),           # Темп: -5 до 10, рекомендуем 1 до 3
+                "saturation": 1 + random.uniform(0.01, 0.05),      # Насыщенность: -5 до 5, рекомендуем 1 до 5
+                "contrast": 1 + random.uniform(0.01, 0.05),        # Контраст: -5 до 5, рекомендуем 1 до 5
+                "brightness": random.uniform(-0.05, 0.05),         # Яркость: -5 до 5, рекомендуем -5 до 5
+                "border": random.randint(2, 4),                    # Рамка: 1 до 5, рекомендуем 2 до 4
+                "noise": random.uniform(1, 3),                     # Шум: 1 до 5, рекомендуем 1 до 3
+                "audio_tone": 1 + random.uniform(0.01, 0.03),      # Тон аудио: 1 до 5, рекомендуем 1 до 3
+                "audio_noise": 0,
+                "color_mixer": True,                               # Микшер цвета: Вкл/Выкл
                 "output_format": "mp4",
-                "bitrate_change": random.randint(-50, 50),         # Изменение битрейта
-                "rotate": random.uniform(-0.3, 0.3),               # Микро-поворот (быстрый)
+                "bitrate_change": random.randint(-30, 30),
+                "rotate": 0,
             }
         
         # Строим фильтры
