@@ -3,8 +3,10 @@ DocGen Bot - Telegram бот для генерации документов и �
 Все меню работают через inline кнопки с единым callback handler
 """
 
+import asyncio
 import logging
 import os
+import sys
 import tempfile
 from telegram import Update
 from telegram.ext import (
@@ -419,15 +421,11 @@ async def main_callback_handler(update: Update, context):
     
     # === Перезапуск бота ===
     if data == "admin_restart":
-        from keyboards import get_admin_back_keyboard
         await safe_edit_text(query, 
             "🔄 **Перезапуск бота...**\n\n"
             "Бот будет перезапущен через 3 секунды.",
             parse_mode="Markdown"
         )
-        import asyncio
-        import os
-        import sys
         await asyncio.sleep(3)
         os.execv(sys.executable, [sys.executable] + sys.argv)
         return
