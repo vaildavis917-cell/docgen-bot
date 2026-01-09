@@ -1218,11 +1218,52 @@ async def message_handler(update: Update, context):
     
     # === Google Play ===
     if waiting_for == 'gplay_add':
-        await update.message.reply_text(
-            f"✅ Приложение `{text}` добавлено в отслеживание.",
-            reply_markup=get_main_menu_keyboard(user_id),
-            parse_mode="Markdown"
-        )
+        from handlers.misc_handler import gplay_add_app, extract_package_name, check_google_play_app
+        from keyboards import get_gplay_menu_keyboard
+        
+        package = extract_package_name(text)
+        
+        await update.message.reply_text("⏳ Проверяю приложение...")
+        
+        # Проверяем приложение
+        exists, message = check_google_play_app(package)
+        
+        if exists:
+            # Добавляем в список
+            if 'gplay_apps' not in context.user_data:
+                context.user_data['gplay_apps'] = []
+            
+            if len(context.user_data['gplay_apps']) >= 3:
+                await update.message.reply_text(
+                    "❌ Достигнут лимит в 3 приложения.\n"
+                    "Для увеличения лимита приобретите подписку.",
+                    reply_markup=get_gplay_menu_keyboard(user_id)
+                )
+            elif package in context.user_data['gplay_apps']:
+                await update.message.reply_text(
+                    "⚠️ Это приложение уже отслеживается.",
+                    reply_markup=get_gplay_menu_keyboard(user_id)
+                )
+            else:
+                context.user_data['gplay_apps'].append(package)
+                await update.message.reply_text(
+                    f"✅ Приложение `{package}` добавлено в отслеживание!\n\n"
+                    f"Статус: {message}",
+                    reply_markup=get_gplay_menu_keyboard(user_id),
+                    parse_mode="Markdown"
+                )
+        elif exists is False:
+            await update.message.reply_text(
+                f"⚠️ {message}\n\n"
+                f"Приложение не добавлено.",
+                reply_markup=get_gplay_menu_keyboard(user_id)
+            )
+        else:
+            await update.message.reply_text(
+                f"❌ {message}",
+                reply_markup=get_gplay_menu_keyboard(user_id)
+            )
+        
         context.user_data.pop('waiting_for', None)
         return
     
@@ -1236,7 +1277,8 @@ async def message_handler(update: Update, context):
             target_id = int(parts[0])
             note = parts[1] if len(parts) > 1 else None
             
-            if add_to_vip(target_id, note):
+            admin_id = update.effective_user.id
+            if add_to_vip(target_id, admin_id, note):
                 await update.message.reply_text(
                     f"✅ Пользователь `{target_id}` добавлен в VIP!",
                     reply_markup=get_admin_back_keyboard(),
