@@ -122,6 +122,22 @@ def get_variation_count_keyboard(media_type="photo", user_id=None):
     return InlineKeyboardMarkup(keyboard)
 
 
+def get_video_format_keyboard(user_id=None):
+    """Клавиатура выбора формата видео"""
+    keyboard = [
+        [
+            InlineKeyboardButton(".mp4", callback_data="vformat_mp4"),
+            InlineKeyboardButton(".mov", callback_data="vformat_mov"),
+        ],
+        [
+            InlineKeyboardButton(".avi", callback_data="vformat_avi"),
+            InlineKeyboardButton(".mkv", callback_data="vformat_mkv"),
+        ],
+        [InlineKeyboardButton("❌ Отмена", callback_data="back_uniq_menu")]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
 # === EXIF редактор ===
 def get_exif_menu_keyboard(user_id=None):
     """Меню EXIF редактора"""

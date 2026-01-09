@@ -701,9 +701,9 @@ async def main_callback_handler(update: Update, context):
         
         context.user_data['uniq_type'] = media_type
         context.user_data['variation_count'] = count
-        context.user_data['waiting_for'] = f'uniq_{media_type}'
         
         if media_type == 'photo':
+            context.user_data['waiting_for'] = 'uniq_photo'
             await safe_edit_text(query, 
                 f"📸 **Уникализация фото**\n\n"
                 f"🔢 Вариаций: **{count}**\n\n"
@@ -714,15 +714,33 @@ async def main_callback_handler(update: Update, context):
                 parse_mode="Markdown"
             )
         else:
+            # Для видео сначала выбор формата
+            from keyboards import get_video_format_keyboard
             await safe_edit_text(query, 
                 f"🎬 **Уникализация видео**\n\n"
                 f"🔢 Вариаций: **{count}**\n\n"
-                f"👉 **Отправьте видео файлом.**\n\n"
-                f"⚠️ Ограничение на размер файла – 20 МБ.\n"
-                f"🎬 Форматы: MP4, AVI, MOV, MKV",
-                reply_markup=get_cancel_keyboard(user_id),
+                f"👉 Выберите формат видео:",
+                reply_markup=get_video_format_keyboard(user_id),
                 parse_mode="Markdown"
             )
+        return
+    
+    # === Обработка выбора формата видео ===
+    if data.startswith("vformat_"):
+        video_format = data.replace("vformat_", "")  # mp4, mov, avi, mkv
+        context.user_data['video_format'] = video_format
+        context.user_data['waiting_for'] = 'uniq_video'
+        
+        count = context.user_data.get('variation_count', 1)
+        await safe_edit_text(query, 
+            f"🎬 **Уникализация видео**\n\n"
+            f"🔢 Вариаций: **{count}**\n"
+            f"📁 Формат: **.{video_format}**\n\n"
+            f"👉 **Отправьте видео файлом.**\n\n"
+            f"⚠️ Ограничение на размер файла – 20 МБ.",
+            reply_markup=get_cancel_keyboard(user_id),
+            parse_mode="Markdown"
+        )
         return
     
     if data == "uniq_default":
@@ -1562,7 +1580,8 @@ async def video_handler(update: Update, context):
         import shutil
         
         variation_count = context.user_data.get('variation_count', 1)
-        status_msg = await update.message.reply_text(f"⏳ Уникализирую видео ({variation_count} вариаций)...\nЭто может занять некоторое время.")
+        video_format = context.user_data.get('video_format', 'mp4')
+        status_msg = await update.message.reply_text(f"⏳ Уникализирую видео ({variation_count} вариаций, .{video_format})...\nЭто может занять некоторое время.")
         
         temp_dir = None
         try:
@@ -1577,7 +1596,7 @@ async def video_handler(update: Update, context):
             success_count = 0
             # Создаём нужное количество вариаций
             for i in range(variation_count):
-                output_path = os.path.join(temp_dir, f"unique_{i+1}.mp4")
+                output_path = os.path.join(temp_dir, f"unique_{i+1}.{video_format}")
                 
                 # Обновляем статус
                 try:
@@ -1586,7 +1605,8 @@ async def video_handler(update: Update, context):
                     pass
                 
                 # Асинхронная обработка - не блокирует бота
-                success, result = await uniqualize_video_async(input_path, output_path, None)
+                settings = {'output_format': video_format}
+                success, result = await uniqualize_video_async(input_path, output_path, settings)
                 
                 if success and os.path.exists(output_path):
                     with open(output_path, 'rb') as f:
@@ -1620,6 +1640,7 @@ async def video_handler(update: Update, context):
         
         context.user_data.pop('waiting_for', None)
         context.user_data.pop('variation_count', None)
+        context.user_data.pop('video_format', None)
         return
     
     # Если не ждём видео
