@@ -417,6 +417,21 @@ async def main_callback_handler(update: Update, context):
         )
         return
     
+    # === Перезапуск бота ===
+    if data == "admin_restart":
+        from keyboards import get_admin_back_keyboard
+        await safe_edit_text(query, 
+            "🔄 **Перезапуск бота...**\n\n"
+            "Бот будет перезапущен через 3 секунды.",
+            parse_mode="Markdown"
+        )
+        import asyncio
+        import os
+        import sys
+        await asyncio.sleep(3)
+        os.execv(sys.executable, [sys.executable] + sys.argv)
+        return
+    
     # === Антифлуд настройки ===
     if data == "admin_antiflood":
         from keyboards import get_admin_antiflood_keyboard

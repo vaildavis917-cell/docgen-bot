@@ -40,7 +40,6 @@ def get_tools_menu_keyboard(user_id=None):
         [InlineKeyboardButton(t("tools.uniqualizer", user_id), callback_data="menu_uniqualizer")],
         [InlineKeyboardButton(t("tools.exif", user_id), callback_data="menu_exif")],
         [InlineKeyboardButton(t("tools.download_site", user_id), callback_data="menu_site")],
-        [InlineKeyboardButton(t("tools.download_tiktok", user_id), callback_data="menu_tiktok")],
         [InlineKeyboardButton(t("buttons.back", user_id), callback_data="back_main")]
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -381,7 +380,8 @@ def get_admin_panel_keyboard():
         [InlineKeyboardButton("📊 Статистика", callback_data="admin_stats")],
         [InlineKeyboardButton("📢 Рассылка", callback_data="admin_broadcast")],
         [InlineKeyboardButton("🔧 Maintenance", callback_data="admin_maintenance")],
-        [InlineKeyboardButton("👤 Инфо о пользователе", callback_data="admin_userinfo")]
+        [InlineKeyboardButton("👤 Инфо о пользователе", callback_data="admin_userinfo")],
+        [InlineKeyboardButton("🔄 Перезапустить бота", callback_data="admin_restart")]
     ]
     return InlineKeyboardMarkup(keyboard)
 

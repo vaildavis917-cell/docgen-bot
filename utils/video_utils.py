@@ -53,23 +53,23 @@ def uniqualize_video(input_path, output_path, settings=None):
         orig_height = int(video_stream.get('height', 1080))
         orig_fps = eval(video_stream.get('r_frame_rate', '30/1'))
         
-        # Применяем настройки или используем МИНИМАЛЬНЫЕ для скорости
+        # Применяем настройки или используем СУПЕР-БЫСТРЫЕ для скорости
         if settings is None:
-            # Авто-настройки - ТОЛЬКО БЫСТРЫЕ ФИЛЬТРЫ
+            # Авто-настройки - МИНИМУМ ФИЛЬТРОВ = МАКСИМУМ СКОРОСТИ
             settings = {
-                "fps_change": 0,                                   # FPS: не меняем (медленно)
-                "resolution_change": random.uniform(-3, 3),        # Разрешение: минимальное изменение
-                "tempo": 1,                                        # Темп: не меняем (медленно)
-                "saturation": 1 + random.uniform(0.01, 0.03),      # Насыщенность: минимум
-                "contrast": 1 + random.uniform(0.01, 0.03),        # Контраст: минимум
-                "brightness": random.uniform(-0.02, 0.02),         # Яркость: минимум
-                "border": 0,                                       # Рамка: ОТКЛЮЧЕНА (медленно)
-                "noise": 0,                                        # Шум: ОТКЛЮЧЕН (очень медленно)
-                "audio_tone": 1,                                   # Тон аудио: не меняем
+                "fps_change": 0,                                   # ОТКЛЮЧЕН
+                "resolution_change": 0,                            # ОТКЛЮЧЕН (только 720p лимит)
+                "tempo": 1,                                        # ОТКЛЮЧЕН
+                "saturation": 1,                                   # ОТКЛЮЧЕН
+                "contrast": 1,                                     # ОТКЛЮЧЕН
+                "brightness": 0,                                   # ОТКЛЮЧЕН
+                "border": 0,                                       # ОТКЛЮЧЕН
+                "noise": 0,                                        # ОТКЛЮЧЕН
+                "audio_tone": 1,                                   # ОТКЛЮЧЕН
                 "audio_noise": 0,
-                "color_mixer": False,                              # Микшер цвета: ОТКЛЮЧЕН
+                "color_mixer": False,                              # ОТКЛЮЧЕН
                 "output_format": "mp4",
-                "bitrate_change": random.randint(-20, 20),
+                "bitrate_change": random.randint(-30, 30),         # ТОЛЬКО БИТРЕЙТ + МЕТАДАННЫЕ
                 "rotate": 0,
             }
         
@@ -182,38 +182,26 @@ def uniqualize_video(input_path, output_path, settings=None):
             if tempo != 1:
                 audio_filters.append(f"atempo={tempo}")
         
-        # Строим команду ffmpeg (МАКСИМАЛЬНАЯ СКОРОСТЬ)
-        cmd = [
-            'ffmpeg', '-y',
-            '-threads', '0',           # Использовать все ядра CPU
-            '-i', input_path
-        ]
+        # Проверяем нужны ли фильтры
+        need_filters = bool(video_filters) or bool(audio_filters)
         
-        # Видео фильтры
-        if video_filters:
-            cmd.extend(['-vf', ','.join(video_filters)])
+        # Строим команду ffmpeg
+        cmd = ['ffmpeg', '-y', '-i', input_path]
         
-        # Аудио фильтры
-        if audio_filters:
-            cmd.extend(['-af', ','.join(audio_filters)])
-        
-        # Изменение FPS
-        fps_change = settings.get("fps_change", 0)
-        if isinstance(fps_change, tuple):
-            fps_change = random.uniform(fps_change[0], fps_change[1])
-        new_fps = max(15, min(60, orig_fps + fps_change))
-        cmd.extend(['-r', str(int(new_fps))])
-        
-        # Кодеки (МАКСИМАЛЬНАЯ СКОРОСТЬ)
-        crf_value = 23 + random.randint(-2, 2)  # CRF 21-25 для уникальности
-        cmd.extend([
-            '-c:v', 'libx264',
-            '-preset', 'ultrafast',    # Самый быстрый пресет
-            '-crf', str(crf_value),
-        ])
-        if audio_stream:
-            audio_bitrate = 128 + random.randint(-16, 16)  # 112-144k
-            cmd.extend(['-c:a', 'aac', '-b:a', f'{audio_bitrate}k'])
+        if need_filters:
+            # Есть фильтры - нужно перекодировать
+            if video_filters:
+                cmd.extend(['-vf', ','.join(video_filters)])
+            if audio_filters:
+                cmd.extend(['-af', ','.join(audio_filters)])
+            
+            crf_value = 23 + random.randint(-2, 2)
+            cmd.extend(['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', str(crf_value)])
+            if audio_stream:
+                cmd.extend(['-c:a', 'aac', '-b:a', '128k'])
+        else:
+            # НЕТ фильтров - СТРИМ КОПИ (МГНОВЕННО!)
+            cmd.extend(['-c:v', 'copy', '-c:a', 'copy'])
         
         # Метаданные (очищаем и добавляем новые случайные)
         cmd.extend(['-map_metadata', '-1'])
