@@ -95,6 +95,33 @@ def get_uniqualizer_settings_keyboard(user_id=None):
     return InlineKeyboardMarkup(keyboard)
 
 
+def get_variation_count_keyboard(media_type="photo", user_id=None):
+    """Клавиатура выбора количества вариаций"""
+    prefix = f"var_{media_type}_"
+    keyboard = [
+        [
+            InlineKeyboardButton("1️⃣", callback_data=f"{prefix}1"),
+            InlineKeyboardButton("2️⃣", callback_data=f"{prefix}2"),
+            InlineKeyboardButton("3️⃣", callback_data=f"{prefix}3"),
+        ],
+        [
+            InlineKeyboardButton("4️⃣", callback_data=f"{prefix}4"),
+            InlineKeyboardButton("5️⃣", callback_data=f"{prefix}5"),
+            InlineKeyboardButton("6️⃣", callback_data=f"{prefix}6"),
+        ],
+        [
+            InlineKeyboardButton("7️⃣", callback_data=f"{prefix}7"),
+            InlineKeyboardButton("8️⃣", callback_data=f"{prefix}8"),
+            InlineKeyboardButton("9️⃣", callback_data=f"{prefix}9"),
+        ],
+        [
+            InlineKeyboardButton("🔟 10", callback_data=f"{prefix}10"),
+        ],
+        [InlineKeyboardButton(t("buttons.back", user_id), callback_data="back_uniq_menu")]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
 # === EXIF редактор ===
 def get_exif_menu_keyboard(user_id=None):
     """Меню EXIF редактора"""

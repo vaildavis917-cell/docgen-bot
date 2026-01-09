@@ -670,23 +670,59 @@ async def main_callback_handler(update: Update, context):
     
     # === Уникализатор ===
     if data == "uniq_photo":
+        from keyboards import get_variation_count_keyboard
         context.user_data['uniq_type'] = 'photo'
         await safe_edit_text(query, 
             "📁 **Уникализировать фото**\n\n"
-            "Выберите настройки уникализации:",
-            reply_markup=get_uniqualizer_settings_keyboard(user_id),
+            "🔢 Выберите количество вариаций:\n"
+            "(сколько уникальных копий создать)",
+            reply_markup=get_variation_count_keyboard("photo", user_id),
             parse_mode="Markdown"
         )
         return
     
     if data == "uniq_video":
+        from keyboards import get_variation_count_keyboard
         context.user_data['uniq_type'] = 'video'
         await safe_edit_text(query, 
             "📹 **Уникализировать видео**\n\n"
-            "Выберите настройки уникализации:",
-            reply_markup=get_uniqualizer_settings_keyboard(user_id),
+            "🔢 Выберите количество вариаций:\n"
+            "(сколько уникальных копий создать)",
+            reply_markup=get_variation_count_keyboard("video", user_id),
             parse_mode="Markdown"
         )
+        return
+    
+    # === Обработка выбора количества вариаций ===
+    if data.startswith("var_photo_") or data.startswith("var_video_"):
+        parts = data.split("_")
+        media_type = parts[1]  # photo или video
+        count = int(parts[2])  # количество
+        
+        context.user_data['uniq_type'] = media_type
+        context.user_data['variation_count'] = count
+        context.user_data['waiting_for'] = f'uniq_{media_type}'
+        
+        if media_type == 'photo':
+            await safe_edit_text(query, 
+                f"📸 **Уникализация фото**\n\n"
+                f"🔢 Вариаций: **{count}**\n\n"
+                f"👉 **Отправьте фото без сжатия (файлом).**\n\n"
+                f"⚠️ Ограничение на размер файла – 20 МБ.\n"
+                f"‼️ Можно загрузить до 10 файлов или архив RAR/ZIP",
+                reply_markup=get_cancel_keyboard(user_id),
+                parse_mode="Markdown"
+            )
+        else:
+            await safe_edit_text(query, 
+                f"🎬 **Уникализация видео**\n\n"
+                f"🔢 Вариаций: **{count}**\n\n"
+                f"👉 **Отправьте видео файлом.**\n\n"
+                f"⚠️ Ограничение на размер файла – 20 МБ.\n"
+                f"🎬 Форматы: MP4, AVI, MOV, MKV",
+                reply_markup=get_cancel_keyboard(user_id),
+                parse_mode="Markdown"
+            )
         return
     
     if data == "uniq_default":
@@ -1388,7 +1424,8 @@ async def photo_handler(update: Update, context):
         import tempfile
         import os
         
-        await update.message.reply_text("⏳ Уникализирую фото...")
+        variation_count = context.user_data.get('variation_count', 1)
+        await update.message.reply_text(f"⏳ Уникализирую фото ({variation_count} вариаций)...")
         
         try:
             photo = update.message.photo[-1] if update.message.photo else update.message.document
@@ -1396,19 +1433,26 @@ async def photo_handler(update: Update, context):
             
             temp_dir = tempfile.mkdtemp()
             input_path = os.path.join(temp_dir, "input.jpg")
-            output_path = os.path.join(temp_dir, "output.jpg")
             
             await file.download_to_drive(input_path)
             
-            settings = context.user_data.get('uniq_settings')
-            uniqualize_image(input_path, output_path, settings)
+            # Создаём нужное количество вариаций
+            for i in range(variation_count):
+                output_path = os.path.join(temp_dir, f"unique_{i+1}.jpg")
+                settings = context.user_data.get('uniq_settings')
+                uniqualize_image(input_path, output_path, settings)
+                
+                with open(output_path, 'rb') as f:
+                    caption = f"✅ Вариация {i+1}/{variation_count}" if variation_count > 1 else "✅ Фото уникализировано!"
+                    await update.message.reply_document(
+                        document=f,
+                        caption=caption
+                    )
             
-            with open(output_path, 'rb') as f:
-                await update.message.reply_document(
-                    document=f,
-                    caption="✅ Фото уникализировано!",
-                    reply_markup=get_main_menu_keyboard(user_id)
-                )
+            await update.message.reply_text(
+                f"✅ Готово! Создано {variation_count} уникальных копий.",
+                reply_markup=get_main_menu_keyboard(user_id)
+            )
         except Exception as e:
             await update.message.reply_text(
                 f"❌ Ошибка: {str(e)}",
@@ -1416,6 +1460,7 @@ async def photo_handler(update: Update, context):
             )
         
         context.user_data.pop('waiting_for', None)
+        context.user_data.pop('variation_count', None)
         return
     
     if waiting_for == 'exif_view':
@@ -1516,7 +1561,8 @@ async def video_handler(update: Update, context):
         import tempfile
         import shutil
         
-        status_msg = await update.message.reply_text("⏳ Уникализирую видео... Это может занять некоторое время.")
+        variation_count = context.user_data.get('variation_count', 1)
+        status_msg = await update.message.reply_text(f"⏳ Уникализирую видео ({variation_count} вариаций)...\nЭто может занять некоторое время.")
         
         temp_dir = None
         try:
@@ -1525,27 +1571,38 @@ async def video_handler(update: Update, context):
             
             temp_dir = tempfile.mkdtemp()
             input_path = os.path.join(temp_dir, "input.mp4")
-            output_path = os.path.join(temp_dir, "output.mp4")
             
             await file.download_to_drive(input_path)
             
-            settings = context.user_data.get('uniq_settings')
+            success_count = 0
+            # Создаём нужное количество вариаций
+            for i in range(variation_count):
+                output_path = os.path.join(temp_dir, f"unique_{i+1}.mp4")
+                
+                # Обновляем статус
+                try:
+                    await status_msg.edit_text(f"⏳ Обработка вариации {i+1}/{variation_count}...")
+                except:
+                    pass
+                
+                # Асинхронная обработка - не блокирует бота
+                success, result = await uniqualize_video_async(input_path, output_path, None)
+                
+                if success and os.path.exists(output_path):
+                    with open(output_path, 'rb') as f:
+                        caption = f"✅ Вариация {i+1}/{variation_count}" if variation_count > 1 else "✅ Видео уникализировано!"
+                        await update.message.reply_video(
+                            video=f,
+                            caption=caption
+                        )
+                    success_count += 1
+                else:
+                    await update.message.reply_text(f"❌ Ошибка вариации {i+1}: {result}")
             
-            # Асинхронная обработка - не блокирует бота
-            success, result = await uniqualize_video_async(input_path, output_path, settings)
-            
-            if success and os.path.exists(output_path):
-                with open(output_path, 'rb') as f:
-                    await update.message.reply_video(
-                        video=f,
-                        caption="✅ Видео уникализировано!",
-                        reply_markup=get_main_menu_keyboard(user_id)
-                    )
-            else:
-                await update.message.reply_text(
-                    f"❌ Ошибка обработки: {result}",
-                    reply_markup=get_main_menu_keyboard(user_id)
-                )
+            await update.message.reply_text(
+                f"✅ Готово! Создано {success_count}/{variation_count} уникальных копий.",
+                reply_markup=get_main_menu_keyboard(user_id)
+            )
         except Exception as e:
             logger.error(f"Video processing error: {e}")
             await update.message.reply_text(
@@ -1562,6 +1619,7 @@ async def video_handler(update: Update, context):
                 pass
         
         context.user_data.pop('waiting_for', None)
+        context.user_data.pop('variation_count', None)
         return
     
     # Если не ждём видео

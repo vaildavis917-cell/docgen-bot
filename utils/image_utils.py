@@ -30,15 +30,17 @@ def uniqualize_image(image_path, output_path, settings=None, add_exif=True):
         if img.mode in ('RGBA', 'P'):
             img = img.convert('RGB')
         
-        # Применяем настройки или используем случайные
+        # Максимально разнообразные настройки для уникализации
         if settings is None:
             settings = {
-                "rotation": random.uniform(-2, 2),
-                "brightness": random.uniform(-0.1, 0.2),
-                "contrast": random.uniform(-0.1, 0.2),
-                "color": random.uniform(-0.1, 0.2),
-                "noise": random.uniform(2, 5),
-                "blur": random.uniform(0.5, 1.5)
+                "rotation": random.uniform(-3, 3),              # Поворот ±3 градуса
+                "brightness": random.uniform(-0.15, 0.15),      # Яркость ±15%
+                "contrast": random.uniform(-0.15, 0.15),        # Контраст ±15%
+                "color": random.uniform(-0.15, 0.15),           # Цвет ±15%
+                "noise": random.uniform(1, 8),                  # Шум 1-8
+                "blur": random.uniform(0.3, 1.2),               # Блюр 0.3-1.2
+                "crop": random.randint(1, 5),                   # Кроп 1-5 пикселей
+                "quality": random.randint(85, 98),              # Качество JPEG
             }
         
         # Поворот
@@ -95,14 +97,22 @@ def uniqualize_image(image_path, output_path, settings=None, add_exif=True):
             blur_radius = blur_level / 5  # Нормализуем
             img = img.filter(ImageFilter.GaussianBlur(radius=blur_radius))
         
+        # Кроп (обрезка краёв)
+        if "crop" in settings and settings["crop"] > 0:
+            crop_px = settings["crop"]
+            width, height = img.size
+            if width > crop_px * 2 and height > crop_px * 2:
+                img = img.crop((crop_px, crop_px, width - crop_px, height - crop_px))
+        
         # Небольшое изменение размера для уникальности хеша
         width, height = img.size
-        new_width = width + random.randint(-2, 2)
-        new_height = height + random.randint(-2, 2)
+        new_width = width + random.randint(-3, 3)
+        new_height = height + random.randint(-3, 3)
         img = img.resize((new_width, new_height), Image.LANCZOS)
         
-        # Сохраняем
-        img.save(output_path, "JPEG", quality=random.randint(90, 95))
+        # Сохраняем с разным качеством
+        quality = settings.get("quality", random.randint(85, 98))
+        img.save(output_path, "JPEG", quality=quality)
         
         # Добавляем EXIF если нужно
         if add_exif:
