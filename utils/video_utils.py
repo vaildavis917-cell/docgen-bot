@@ -262,37 +262,42 @@ def uniqualize_video(input_path, output_path, settings=None):
 
 
 def download_tiktok_video(url, output_path):
-    """Скачивание видео с TikTok"""
+    """Скачивание видео с TikTok через tikwm.com API"""
+    import requests
+    
     try:
-        cmd = [
-            'yt-dlp',
-            '--no-warnings',
-            '-o', output_path,
-            '--format', 'best',
-            url
-        ]
+        # API tikwm.com
+        api_url = "https://www.tikwm.com/api/"
+        params = {"url": url, "hd": 1}
         
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        response = requests.get(api_url, params=params, timeout=30)
+        data = response.json()
         
-        # yt-dlp может добавить расширение
-        if os.path.exists(output_path):
-            return True, output_path
+        if data.get("code") != 0:
+            return False, data.get("msg", "Ошибка API")
         
-        # Проверяем с расширением .mp4
-        if os.path.exists(output_path + '.mp4'):
-            return True, output_path + '.mp4'
+        # Получаем ссылку на видео без водяного знака
+        video_url = data.get("data", {}).get("play")
+        if not video_url:
+            video_url = data.get("data", {}).get("hdplay")
         
-        # Ищем файл по паттерну
-        output_dir = os.path.dirname(output_path)
-        output_name = os.path.basename(output_path)
-        for f in os.listdir(output_dir):
-            if f.startswith(output_name.rsplit('.', 1)[0]):
-                return True, os.path.join(output_dir, f)
+        if not video_url:
+            return False, "Не удалось получить ссылку на видео"
         
-        return False, result.stderr[:500] if result.stderr else "Файл не найден"
+        # Скачиваем видео
+        video_response = requests.get(video_url, timeout=120)
+        if video_response.status_code != 200:
+            return False, f"Ошибка скачивания: {video_response.status_code}"
         
-    except subprocess.TimeoutExpired:
-        return False, "Превышено время скачивания"
+        # Сохраняем
+        final_path = output_path if output_path.endswith('.mp4') else output_path + '.mp4'
+        with open(final_path, 'wb') as f:
+            f.write(video_response.content)
+        
+        return True, final_path
+        
+    except requests.Timeout:
+        return False, "Превышено время ожидания"
     except Exception as e:
         return False, str(e)
 
