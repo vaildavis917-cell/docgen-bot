@@ -727,13 +727,15 @@ async def main_callback_handler(update: Update, context):
                 parse_mode="Markdown"
             )
         else:
-            # Для видео сначала выбор формата
-            from keyboards import get_video_format_keyboard
+            # Для видео - сразу к загрузке (mp4 по умолчанию)
+            context.user_data['video_format'] = 'mp4'
+            context.user_data['waiting_for'] = 'uniq_video'
             await safe_edit_text(query, 
                 f"🎬 **Уникализация видео**\n\n"
                 f"🔢 Вариаций: **{count}**\n\n"
-                f"👉 Выберите формат видео:",
-                reply_markup=get_video_format_keyboard(user_id),
+                f"👉 **Отправьте видео файлом.**\n\n"
+                f"⚠️ Ограничение на размер файла – 20 МБ.",
+                reply_markup=get_cancel_keyboard(user_id),
                 parse_mode="Markdown"
             )
         return
