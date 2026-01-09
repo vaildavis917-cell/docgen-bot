@@ -53,23 +53,23 @@ def uniqualize_video(input_path, output_path, settings=None):
         orig_height = int(video_stream.get('height', 1080))
         orig_fps = eval(video_stream.get('r_frame_rate', '30/1'))
         
-        # Применяем настройки или используем оптимальные для уникализации
+        # Применяем настройки или используем МИНИМАЛЬНЫЕ для скорости
         if settings is None:
-            # Авто-настройки с рекомендованными значениями
+            # Авто-настройки - ТОЛЬКО БЫСТРЫЕ ФИЛЬТРЫ
             settings = {
-                "fps_change": random.uniform(-1, 1),               # FPS: -2 до 2, рекомендуем -1 до 1
-                "resolution_change": random.uniform(-5, 5),        # Разрешение: -10 до 10, рекомендуем -5 до 5
-                "tempo": 1 + random.uniform(0.01, 0.03),           # Темп: -5 до 10, рекомендуем 1 до 3
-                "saturation": 1 + random.uniform(0.01, 0.05),      # Насыщенность: -5 до 5, рекомендуем 1 до 5
-                "contrast": 1 + random.uniform(0.01, 0.05),        # Контраст: -5 до 5, рекомендуем 1 до 5
-                "brightness": random.uniform(-0.05, 0.05),         # Яркость: -5 до 5, рекомендуем -5 до 5
-                "border": random.randint(2, 4),                    # Рамка: 1 до 5, рекомендуем 2 до 4
-                "noise": 0,                                        # Шум ОТКЛЮЧЕН (медленный фильтр)
-                "audio_tone": 1 + random.uniform(0.01, 0.03),      # Тон аудио: 1 до 5, рекомендуем 1 до 3
+                "fps_change": 0,                                   # FPS: не меняем (медленно)
+                "resolution_change": random.uniform(-3, 3),        # Разрешение: минимальное изменение
+                "tempo": 1,                                        # Темп: не меняем (медленно)
+                "saturation": 1 + random.uniform(0.01, 0.03),      # Насыщенность: минимум
+                "contrast": 1 + random.uniform(0.01, 0.03),        # Контраст: минимум
+                "brightness": random.uniform(-0.02, 0.02),         # Яркость: минимум
+                "border": 0,                                       # Рамка: ОТКЛЮЧЕНА (медленно)
+                "noise": 0,                                        # Шум: ОТКЛЮЧЕН (очень медленно)
+                "audio_tone": 1,                                   # Тон аудио: не меняем
                 "audio_noise": 0,
-                "color_mixer": True,                               # Микшер цвета: Вкл/Выкл
+                "color_mixer": False,                              # Микшер цвета: ОТКЛЮЧЕН
                 "output_format": "mp4",
-                "bitrate_change": random.randint(-30, 30),
+                "bitrate_change": random.randint(-20, 20),
                 "rotate": 0,
             }
         
@@ -182,11 +182,10 @@ def uniqualize_video(input_path, output_path, settings=None):
             if tempo != 1:
                 audio_filters.append(f"atempo={tempo}")
         
-        # Строим команду ffmpeg (оптимизировано для скорости)
+        # Строим команду ffmpeg (МАКСИМАЛЬНАЯ СКОРОСТЬ)
         cmd = [
             'ffmpeg', '-y',
             '-threads', '0',           # Использовать все ядра CPU
-            '-hwaccel', 'auto',        # Авто-аппаратное ускорение
             '-i', input_path
         ]
         
@@ -205,14 +204,12 @@ def uniqualize_video(input_path, output_path, settings=None):
         new_fps = max(15, min(60, orig_fps + fps_change))
         cmd.extend(['-r', str(int(new_fps))])
         
-        # Кодеки (оптимизировано для скорости)
+        # Кодеки (МАКСИМАЛЬНАЯ СКОРОСТЬ)
         crf_value = 23 + random.randint(-2, 2)  # CRF 21-25 для уникальности
         cmd.extend([
             '-c:v', 'libx264',
             '-preset', 'ultrafast',    # Самый быстрый пресет
-            '-tune', 'fastdecode',     # Оптимизация для быстрого декодирования
             '-crf', str(crf_value),
-            '-movflags', '+faststart', # Быстрый старт воспроизведения
         ])
         if audio_stream:
             audio_bitrate = 128 + random.randint(-16, 16)  # 112-144k
