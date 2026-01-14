@@ -49,12 +49,16 @@ def get_tools_menu_keyboard(user_id=None):
 def get_generators_menu_keyboard(user_id=None):
     """Подменю генераторов"""
     keyboard = [
+        [InlineKeyboardButton("👤 Персона", callback_data="mgen_person")],
+        [InlineKeyboardButton("📍 Адрес", callback_data="mgen_address")],
+        [InlineKeyboardButton("💳 Карта", callback_data="mgen_card")],
+        [InlineKeyboardButton("🏢 Компания", callback_data="mgen_company")],
+        [InlineKeyboardButton("💻 Интернет", callback_data="mgen_internet")],
+        [InlineKeyboardButton("🔐 Крипто", callback_data="mgen_crypto")],
+        [InlineKeyboardButton("📦 Полный профиль", callback_data="mgen_full")],
+        [InlineKeyboardButton("─" * 10, callback_data="ignore")],
         [InlineKeyboardButton(t("generators.selfie", user_id), callback_data="menu_selfie")],
-        [InlineKeyboardButton(t("generators.address", user_id), callback_data="menu_address")],
-        [InlineKeyboardButton(t("generators.card", user_id), callback_data="menu_card")],
-        [InlineKeyboardButton(t("generators.twofa", user_id), callback_data="menu_twofa")],
         [InlineKeyboardButton(t("generators.antidetect", user_id), callback_data="menu_antidetect")],
-        [InlineKeyboardButton(t("generators.text", user_id), callback_data="menu_text")],
         [InlineKeyboardButton(t("buttons.back", user_id), callback_data="back_main")]
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -350,6 +354,48 @@ def get_tiktok_menu_keyboard(user_id=None):
         [InlineKeyboardButton("🎬 Download", callback_data="tiktok_download")],
         [InlineKeyboardButton("🎬 Download + Uniqualize", callback_data="tiktok_download_uniq")],
         [InlineKeyboardButton(t("buttons.back", user_id), callback_data="back_tools")]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+# === Mimesis генераторы ===
+def get_mgen_again_keyboard(gen_type, user_id=None):
+    """Кнопка сгенерировать ещё"""
+    keyboard = [
+        [InlineKeyboardButton("🔄 Ещё", callback_data=f"mgen_{gen_type}")],
+        [InlineKeyboardButton("📋 Копировать", callback_data=f"mgen_copy_{gen_type}")],
+        [InlineKeyboardButton(t("buttons.back", user_id), callback_data="back_generators")]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def get_mgen_address_country_keyboard(user_id=None):
+    """Выбор страны для адреса"""
+    keyboard = [
+        [InlineKeyboardButton("🇺🇸 USA", callback_data="mgen_addr_us"),
+         InlineKeyboardButton("🇬🇧 UK", callback_data="mgen_addr_uk")],
+        [InlineKeyboardButton("🇩🇪 Germany", callback_data="mgen_addr_de"),
+         InlineKeyboardButton("🇫🇷 France", callback_data="mgen_addr_fr")],
+        [InlineKeyboardButton("🇷🇺 Russia", callback_data="mgen_addr_ru"),
+         InlineKeyboardButton("🇺🇦 Ukraine", callback_data="mgen_addr_ua")],
+        [InlineKeyboardButton("🇵🇱 Poland", callback_data="mgen_addr_pl"),
+         InlineKeyboardButton("🇪🇸 Spain", callback_data="mgen_addr_es")],
+        [InlineKeyboardButton("🇮🇹 Italy", callback_data="mgen_addr_it"),
+         InlineKeyboardButton("🎲 Random", callback_data="mgen_addr_random")],
+        [InlineKeyboardButton(t("buttons.back", user_id), callback_data="back_generators")]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def get_mgen_card_type_keyboard(user_id=None):
+    """Выбор типа карты"""
+    keyboard = [
+        [InlineKeyboardButton("💳 Visa", callback_data="mgen_card_visa"),
+         InlineKeyboardButton("💳 Mastercard", callback_data="mgen_card_mastercard")],
+        [InlineKeyboardButton("💳 Amex", callback_data="mgen_card_amex"),
+         InlineKeyboardButton("💳 Discover", callback_data="mgen_card_discover")],
+        [InlineKeyboardButton("🎲 Random", callback_data="mgen_card_random")],
+        [InlineKeyboardButton(t("buttons.back", user_id), callback_data="back_generators")]
     ]
     return InlineKeyboardMarkup(keyboard)
 

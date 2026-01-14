@@ -977,6 +977,12 @@ async def main_callback_handler(update: Update, context):
         await subscription_callback(update, context)
         return
     
+    # === Mimesis генераторы ===
+    if data.startswith("mgen_"):
+        from handlers.mimesis_handler import mimesis_callback
+        await mimesis_callback(update, context)
+        return
+    
     # === Генераторы (селфи, адреса, карты, антидетект) ===
     if data.startswith("selfie_") or data == "back_generators":
         from handlers.misc_handler import selfie_callback
