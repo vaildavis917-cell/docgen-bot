@@ -21,8 +21,15 @@
 - **Stream copy** для видео - мгновенная обработка видео ≤720p без фильтров
 - **Убран выбор формата** - всегда MP4 для ускорения
 
+### Инструменты
+- **install.sh** - автоматический скрипт установки зависимостей
+  - Определяет Python и pip
+  - Устанавливает ffmpeg
+  - Работает с Python 3.12+ (--break-system-packages)
+  - Fallback на venv если нужно
+
 ### Зависимости
-- Добавлена библиотека `mimesis` (установка: `pip install mimesis --break-system-packages`)
+- Добавлена библиотека `mimesis` в requirements.txt
 
 ---
 
