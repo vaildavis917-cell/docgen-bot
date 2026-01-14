@@ -262,12 +262,13 @@ def get_antidetect_again_keyboard(platform, user_id=None):
 def get_subscription_menu_keyboard(user_id=None):
     """Меню подписок"""
     keyboard = [
-        [InlineKeyboardButton("🆓 Free — $0", callback_data="sub_free")],
-        [InlineKeyboardButton("⭐ Basic — $15 / 150⭐", callback_data="sub_basic")],
-        [InlineKeyboardButton("💎 Professional — $20 / 200⭐", callback_data="sub_pro")],
-        [InlineKeyboardButton("👑 Premium — $30 / 300⭐", callback_data="sub_premium")],
-        [InlineKeyboardButton("💎 Lifetime — $200 / 2000⭐", callback_data="sub_lifetime")],
+        [InlineKeyboardButton("💳 Тарифы", callback_data="sub_pricing")],
+        [InlineKeyboardButton("📊 Моя статистика", callback_data="sub_mystats")],
         [InlineKeyboardButton(t("subscription.my_subscription", user_id), callback_data="sub_my")],
+        [InlineKeyboardButton("─" * 10, callback_data="ignore")],
+        [InlineKeyboardButton("🆓 Free — $0", callback_data="sub_free")],
+        [InlineKeyboardButton("⭐ Pro — $4.99", callback_data="sub_pro_new")],
+        [InlineKeyboardButton("💎 Unlimited — $19.99", callback_data="sub_unlimited")],
         [InlineKeyboardButton(t("buttons.back", user_id), callback_data="back_main")]
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -424,6 +425,7 @@ def get_admin_panel_keyboard():
         [InlineKeyboardButton("👑 VIP управление", callback_data="admin_vip")],
         [InlineKeyboardButton("🚫 Бан управление", callback_data="admin_ban")],
         [InlineKeyboardButton("📊 Статистика", callback_data="admin_stats")],
+        [InlineKeyboardButton("⚠️ Статистика ошибок", callback_data="admin_error_stats")],
         [InlineKeyboardButton("📢 Рассылка", callback_data="admin_broadcast")],
         [InlineKeyboardButton("🔧 Maintenance", callback_data="admin_maintenance")],
         [InlineKeyboardButton("👤 Инфо о пользователе", callback_data="admin_userinfo")],

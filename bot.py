@@ -42,6 +42,9 @@ from utils.security import (
     security_logger, bot_detector, validate_url_input,
     sanitize_user_input, get_security_stats
 )
+from utils.subscription_manager import SubscriptionManager
+from utils.rate_limiter import RateLimiter, rate_limit as rate_limit_decorator
+from utils.error_monitor import ErrorMonitor, handle_errors
 
 # Настройка логирования
 logging.basicConfig(
@@ -330,6 +333,42 @@ async def main_callback_handler(update: Update, context):
         
         await safe_edit_text(query, 
             text,
+            reply_markup=get_admin_back_keyboard(),
+            parse_mode="Markdown"
+        )
+        return
+    
+    if data == "admin_error_stats":
+        from keyboards import get_admin_back_keyboard
+        try:
+            error_monitor = context.bot_data.get('error_monitor')
+            if error_monitor:
+                stats = error_monitor.get_stats()
+            else:
+                stats = "⚠️ Error Monitor не инициализирован"
+        except Exception as e:
+            stats = f"❌ Ошибка: {e}"
+        
+        await safe_edit_text(query, 
+            f"📊 **Статистика ошибок**\n\n{stats}",
+            reply_markup=get_admin_back_keyboard(),
+            parse_mode="Markdown"
+        )
+        return
+    
+    if data == "admin_subscriptions":
+        from keyboards import get_admin_back_keyboard
+        try:
+            sub_manager = context.bot_data.get('sub_manager')
+            if sub_manager:
+                stats = sub_manager.get_admin_stats()
+            else:
+                stats = "⚠️ Subscription Manager не инициализирован"
+        except Exception as e:
+            stats = f"❌ Ошибка: {e}"
+        
+        await safe_edit_text(query, 
+            f"💎 **Статистика подписок**\n\n{stats}",
             reply_markup=get_admin_back_keyboard(),
             parse_mode="Markdown"
         )
@@ -635,6 +674,64 @@ async def main_callback_handler(update: Update, context):
         await safe_edit_text(query, 
             t("subscription.menu_title", user_id),
             reply_markup=get_subscription_menu_keyboard(user_id),
+            parse_mode="Markdown"
+        )
+        return
+    
+    # === Новые кнопки подписок ===
+    if data == "sub_pricing":
+        # Показать тарифы
+        sub_manager = context.bot_data.get('sub_manager')
+        if sub_manager:
+            pricing_msg = sub_manager.get_pricing_message()
+        else:
+            pricing_msg = "💳 **ТАРИФНЫЕ ПЛАНЫ**\n\n⭐ Pro — $4.99/мес\n💎 Unlimited — $19.99/мес"
+        await safe_edit_text(query, 
+            pricing_msg,
+            reply_markup=get_subscription_menu_keyboard(user_id),
+            parse_mode="Markdown"
+        )
+        return
+    
+    if data == "sub_mystats":
+        # Моя статистика
+        sub_manager = context.bot_data.get('sub_manager')
+        if sub_manager:
+            stats_msg = sub_manager.get_usage_info(user_id)
+        else:
+            stats_msg = "📊 **Твоя подписка:** 🆓 Free\n\nИспользовано сегодня: 0/5"
+        await safe_edit_text(query, 
+            stats_msg,
+            reply_markup=get_subscription_menu_keyboard(user_id),
+            parse_mode="Markdown"
+        )
+        return
+    
+    if data == "sub_pro_new":
+        # Покупка Pro
+        await safe_edit_text(query, 
+            "⭐ **Pro подписка**\n\n"
+            "💰 Цена: $4.99/месяц\n\n"
+            "✔️ 500 генераций/месяц\n"
+            "✔️ Приоритетная обработка\n"
+            "✔️ Все шаблоны\n"
+            "✔️ История генераций",
+            reply_markup=get_subscription_buy_keyboard('pro', 4.99, 50, user_id),
+            parse_mode="Markdown"
+        )
+        return
+    
+    if data == "sub_unlimited":
+        # Покупка Unlimited
+        await safe_edit_text(query, 
+            "💎 **Unlimited подписка**\n\n"
+            "💰 Цена: $19.99/месяц\n\n"
+            "✔️ ∞ Безлимит генераций\n"
+            "✔️ Максимальный приоритет\n"
+            "✔️ API доступ\n"
+            "✔️ Batch генерация\n"
+            "✔️ Приоритетная поддержка",
+            reply_markup=get_subscription_buy_keyboard('unlimited', 19.99, 200, user_id),
             parse_mode="Markdown"
         )
         return
@@ -2274,6 +2371,9 @@ def main():
     from telegram.ext import Defaults
     from telegram.constants import ParseMode
     import httpx
+    import signal
+    from config import ADMIN_ID, ADMIN_OPERATOR_ID
+    from webhook_cryptopay import start_webhook
     
     # Оптимизированные настройки HTTP клиента
     # Увеличиваем пул соединений для многопользовательского режима
@@ -2298,6 +2398,50 @@ def main():
         .pool_timeout(10)
         .build()
     )
+    
+    # === Инициализация новых модулей ===
+    sub_manager = SubscriptionManager(data_dir='data')
+    rate_limiter_new = RateLimiter()
+    error_monitor = ErrorMonitor(
+        admin_ids=[ADMIN_ID, ADMIN_OPERATOR_ID],
+        log_dir='logs'
+    )
+    
+    # Сохранение в bot_data для доступа из хендлеров
+    application.bot_data['sub_manager'] = sub_manager
+    application.bot_data['rate_limiter'] = rate_limiter_new
+    application.bot_data['error_monitor'] = error_monitor
+    
+    # === Post init для запуска webhook ===
+    async def post_init(app):
+        import asyncio
+        asyncio.create_task(start_webhook(
+            app.bot_data['sub_manager'],
+            app.bot,
+            port=8443
+        ))
+    
+    application.post_init = post_init
+    
+    # === Graceful shutdown ===
+    is_shutting_down = False
+    
+    async def shutdown(sig):
+        nonlocal is_shutting_down
+        if is_shutting_down:
+            return
+        is_shutting_down = True
+        logger.info(f"Получен сигнал {sig}. Завершение работы...")
+    
+    loop = asyncio.get_event_loop()
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        try:
+            loop.add_signal_handler(
+                sig,
+                lambda s=sig: asyncio.create_task(shutdown(s))
+            )
+        except NotImplementedError:
+            pass  # Windows не поддерживает signal handlers
     
     # Команды
     application.add_handler(CommandHandler("start", start))
