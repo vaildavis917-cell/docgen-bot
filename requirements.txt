@@ -16,3 +16,4 @@ reportlab>=4.0.0
 fpdf2>=2.7.0
 httpx[http2]>=0.25.0
 h2>=4.1.0
+mimesis>=19.0.0
