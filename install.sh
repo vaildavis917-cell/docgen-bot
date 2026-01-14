@@ -44,23 +44,12 @@ echo ""
 echo "📦 Устанавливаем Python зависимости..."
 echo "--------------------------------------"
 
-# Пробуем разные способы установки
-if sudo pip3 install -r requirements.txt --break-system-packages 2>/dev/null; then
-    echo "✅ Зависимости установлены (pip3 + break-system-packages)"
-elif sudo pip install -r requirements.txt --break-system-packages 2>/dev/null; then
-    echo "✅ Зависимости установлены (pip + break-system-packages)"
-elif pip3 install -r requirements.txt --user 2>/dev/null; then
-    echo "✅ Зависимости установлены (pip3 --user)"
-elif pip install -r requirements.txt --user 2>/dev/null; then
-    echo "✅ Зависимости установлены (pip --user)"
-else
-    echo "⚠️ Пробуем через venv..."
-    python3 -m venv venv
-    source venv/bin/activate
-    pip install -r requirements.txt
-    echo "✅ Зависимости установлены (venv)"
-    echo "⚠️ Не забудь активировать venv перед запуском: source venv/bin/activate"
-fi
+# Устанавливаем в систему с --break-system-packages
+echo "Установка в системный Python..."
+sudo pip3 install -r requirements.txt --break-system-packages
+
+echo ""
+echo "✅ Все зависимости установлены!"
 
 # Проверяем .env файл
 if [ ! -f ".env" ]; then
